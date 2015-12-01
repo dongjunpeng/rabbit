@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <mvc:annotation-driven />
+    <context:component-scan base-package="com.buterfleoge.rabbit.action" />
+    <mvc:resources mapping="/asset/**" location="/WEB-INF/asset/" />
+    <mvc:resources mapping="/tool/**" location="/WEB-INF/tool/" />
+    <mvc:resources mapping="/dep/**" location="/WEB-INF/dep/" />
+
+    <mvc:view-controller path="/" view-name="index" />
+
+    <bean id="freemarkerConfig"
+        class="org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer">
+        <property name="templateLoaderPath" value="/WEB-INF" />
+        <property name="defaultEncoding" value="UTF-8"></property>
+        <property name="freemarkerSettings">
+            <props>
+                <prop key="locale">zh_CN</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="viewResolver"
+        class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">
+        <property name="cache" value="true" />
+        <property name="prefix" value="" />
+        <property name="suffix" value=".html" />
+        <property name="viewNames" value="*"></property>
+        <property name="contentType" value="text/html;charset=UTF-8"></property>
+    </bean>
+
+</beans>
