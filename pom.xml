@@ -9,6 +9,7 @@
     <url>https://github.com/buterfleoge/rabbit</url>
 
     <dependencyManagement>
+
         <dependencies>
             <dependency>
                 <groupId>io.spring.platform</groupId>
