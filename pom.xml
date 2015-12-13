@@ -13,7 +13,6 @@
     </parent>
 
     <dependencyManagement>
-
         <dependencies>
             <dependency>
                 <groupId>io.spring.platform</groupId>
