@@ -21,12 +21,14 @@ public class InformationController {
 	@Autowired
 	private InformationRepository informationRepository;
 
+	//返回用户信息
 	@RequestMapping(value = "/information/{userId}", method = RequestMethod.GET)
 	public Information getInformation(@PathVariable long userId, HttpServletResponse response) {
 		response.setStatus(200);
 		return informationRepository.findByUserId(userId);
 	}
 	
+	//更新用户信息
 	@RequestMapping(value = "/updateInformation", method = RequestMethod.POST)
 	public StatusObject updateInformation(@ModelAttribute Information informationRequest, HttpServletResponse response) {
 		Information information=informationRepository.findByUserId(informationRequest.getUserId());

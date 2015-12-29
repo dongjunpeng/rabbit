@@ -42,9 +42,11 @@ public class UserController {
 	}
 
 	// 通过邮箱注册
-	@RequestMapping(value = "/emailRegister", method = RequestMethod.POST)
-	public StatusObject emailRegister(@ModelAttribute User userRequest, HttpServletResponse response) {
-		User user = userRepository.save(userRequest);
+	@RequestMapping(path = "/emailRegister", method = RequestMethod.POST)
+	public StatusObject emailRegister(@ModelAttribute User userRequest, HttpServletResponse response)
+			throws CloneNotSupportedException {
+		User user = userRepository.save(userRequest.clone());
+		// 生成用户的同时生成一个空的用户信息
 		Information information = new Information();
 		information.setUserId(user.getUserId());
 		informationRepository.save(information);
@@ -53,7 +55,7 @@ public class UserController {
 	}
 
 	// 邮箱登录
-	@RequestMapping(value = "/emailLogin", method = RequestMethod.POST)
+	@RequestMapping(path = "/emailLogin", method = RequestMethod.POST)
 	public StatusObject emailLogin(@ModelAttribute User userRequest, HttpServletResponse response) {
 		User user = userRepository.findByEmail(userRequest.getEmail());
 		if (user == null) {
@@ -70,7 +72,7 @@ public class UserController {
 	}
 
 	// 修改密码
-	@RequestMapping(value = "/updatePassword", method = RequestMethod.POST)
+	@RequestMapping(path = "/updatePassword", method = RequestMethod.POST)
 	public StatusObject updatePassword(@ModelAttribute User userRequest,
 			@RequestParam("newPassword") String newPassword, HttpServletResponse response) {
 		User user = userRepository.findByUserId(userRequest.getUserId());
