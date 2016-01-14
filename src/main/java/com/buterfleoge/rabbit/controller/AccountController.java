@@ -17,7 +17,7 @@ import com.buterfleoge.whale.type.protocol.account.RegisterRequest;
 @Controller
 @RequestMapping("/account")
 public class AccountController {
-    
+
     @Autowired
     private RegisterService registerService;
 
