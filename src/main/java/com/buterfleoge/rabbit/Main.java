@@ -20,7 +20,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @Configuration
 @EnableAutoConfiguration
 @ComponentScan("com.buterfleoge")
-@EntityScan(basePackages = "com.buterfleoge.whale.eo")
+@EntityScan(basePackages = "com.buterfleoge.whale.type.entity")
 @EnableJpaRepositories("com.buterfleoge.whale.dao")
 @EnableWebMvc
 @ImportResource("applicationContext.xml")

@@ -1,8 +1,5 @@
 package com.buterfleoge.rabbit.controller;
 
-import java.util.Iterator;
-import java.util.List;
-
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,59 +9,71 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.buterfleoge.whale.StatusObject;
 import com.buterfleoge.whale.dao.TravellerRepository;
-import com.buterfleoge.whale.dao.UserRepository;
-import com.buterfleoge.whale.eo.Traveller;
-import com.buterfleoge.whale.eo.User;
+import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.entity.Traveller;
+import com.buterfleoge.whale.type.protocol.Response;
 
 @RestController
 public class TravellerController {
-	@Autowired
-	private TravellerRepository travellerRepository;
+    @Autowired
+    private TravellerRepository travellerRepository;
 
-	// 增加旅客信息
-	@RequestMapping(path = "/traveller", method = RequestMethod.PUT)
-	public StatusObject addTraveller(@ModelAttribute User userRequest, @ModelAttribute Traveller travellerRequest,
-			HttpServletResponse response) throws CloneNotSupportedException {
-		Traveller traveller = travellerRequest.clone();
-		traveller.setUserid(userRequest.getUserid());
-		travellerRepository.save(traveller);
-		response.setStatus(201);
-		return new StatusObject("success", "traveller created");
-	}
+    // @RequestMapping(path = "addTraveller", method = RequestMethod.POST)
+    // public StatusObject addTraveller(@ModelAttribute User userRequest, @ModelAttribute Traveller
+    // travellerRequest,HttpServletResponse response)
+    // throws CloneNotSupportedException {
+    // Traveller traveller = travellerRequest.clone();
+    // traveller.setUserId(userRequest.getUserId());
+    // travellerRepository.save(traveller);
+    // response.setStatus(201);
+    // return new StatusObject("success", "traveller created");
+    // }
 
-	// 列出所有旅客信息
-	@RequestMapping(path = "/traveller/{userid}", method = RequestMethod.GET)
-	public Iterable<Traveller> getTravellerByUserid(@PathVariable("userid") long userid, HttpServletResponse response) {
-		Iterable<Traveller> iterable = travellerRepository.findByUserid(userid);
-		if (iterable.iterator().hasNext()) {
-			response.setStatus(200);
-			return iterable;
-		} else {
-			response.setStatus(400);
-			return null;
-		}
-	}
+    // 增加旅客信息
+    @RequestMapping(path = "/traveller", method = RequestMethod.PUT)
+    public Response<String> addTraveller(@ModelAttribute AccountInfo userRequest,
+            @ModelAttribute Traveller travellerRequest,
+            HttpServletResponse response) throws CloneNotSupportedException {
+        Traveller traveller = travellerRequest.clone();
+        // traveller.setUserid(userRequest.getUserid());
+        travellerRepository.save(traveller);
+        response.setStatus(201);
+        return new Response<String>();
+    }
 
-	// 修改旅客信息
-	@RequestMapping(path = "/traveller/{travellerId}", method = RequestMethod.POST)
-	public StatusObject updateTraveller(@PathVariable("travellerId") long travellerId,
-			@ModelAttribute Traveller travellerRequest, HttpServletResponse response)
-					throws CloneNotSupportedException {
-		Traveller traveller = travellerRequest.clone();
-		traveller.setTravellerId(travellerId);
-		travellerRepository.save(traveller);
-		response.setStatus(200);
-		return new StatusObject("success", "traveller updated");
-	}
+    // 列出所有旅客信息
+    @RequestMapping(path = "/traveller/{userid}", method = RequestMethod.GET)
+    public Iterable<Traveller> getTravellerByUserid(@PathVariable("userid") long userid, HttpServletResponse response) {
+        Iterable<Traveller> iterable = travellerRepository.findByUserid(userid);
+        if (iterable.iterator().hasNext()) {
+            response.setStatus(200);
+            return iterable;
+        } else {
+            response.setStatus(400);
+            return null;
+        }
+    }
 
-	// 删除旅客信息
-	@RequestMapping(path = "/traveller/{travellerId}", method = RequestMethod.DELETE)
-	public StatusObject deleteTraveller(@PathVariable("travellerId") long travellerId,HttpServletResponse response) {
-		travellerRepository.delete(travellerId);
-		response.setStatus(200);
-		return new StatusObject("success","traveller deleted");
-	}
+    // 修改旅客信息
+    @RequestMapping(path = "/traveller/{travellerId}", method = RequestMethod.POST)
+    public Response<String> updateTraveller(@PathVariable("travellerId") long travellerId,
+            @ModelAttribute Traveller travellerRequest, HttpServletResponse response)
+                    throws CloneNotSupportedException {
+        Traveller traveller = travellerRequest.clone();
+        traveller.setTravellerId(travellerId);
+        travellerRepository.save(traveller);
+        response.setStatus(200);
+        return new Response<String>();
+    }
+
+    // 删除旅客信息
+    @RequestMapping(path = "/traveller/{travellerId}", method = RequestMethod.DELETE)
+    public Response<String> deleteTraveller(@PathVariable("travellerId") long travellerId,
+            HttpServletResponse response) {
+        travellerRepository.delete(travellerId);
+        response.setStatus(200);
+        return new Response<String>();
+    }
 
 }
