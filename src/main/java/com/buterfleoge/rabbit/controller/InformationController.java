@@ -20,19 +20,18 @@ public class InformationController {
 	private InformationRepository informationRepository;
 
 	//返回用户信息
-	@RequestMapping(value = "/information/{userId}", method = RequestMethod.GET)
-	public Information getInformation(@PathVariable long userId, HttpServletResponse response) {
+	@RequestMapping(value = "/information/{userid}", method = RequestMethod.GET)
+	public Information getInformation(@PathVariable long userid, HttpServletResponse response) {
 		response.setStatus(200);
-		return informationRepository.findByUserId(userId);
+		return informationRepository.findByUserid(userid);
 	}
 	
 	//更新用户信息
-	@RequestMapping(value = "/updateInformation", method = RequestMethod.POST)
-	public StatusObject updateInformation(@ModelAttribute Information informationRequest, HttpServletResponse response) {
-		Information information=informationRepository.findByUserId(informationRequest.getUserId());
-		information.setNickname(informationRequest.getNickname());
-		information.setGender(informationRequest.getGender());
-		information.setBirthday(informationRequest.getBirthday());
+	@RequestMapping(value = "/information/{userid}", method = RequestMethod.POST)
+	public StatusObject updateInformation(@PathVariable long userid, @ModelAttribute Information informationRequest,
+			HttpServletResponse response) throws CloneNotSupportedException {
+		Information information=informationRequest.clone();
+		information.setUserid(userid);
 		informationRepository.save(information);
 		response.setStatus(200);
 		return new StatusObject("success","information updated");
