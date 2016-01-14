@@ -30,9 +30,9 @@ public class UserController {
 	private InformationRepository informationRepository;
 
 	// 邮箱是否存在
-	@RequestMapping(path = "/email/{email}", method = RequestMethod.GET)
-	public StatusObject emailExists(@PathVariable String email, HttpServletResponse response) {
-		if (userRepository.countByEmail(email) > 0) {
+	@RequestMapping(path = "/service/emailValidation", method = RequestMethod.GET)
+	public StatusObject emailExists(@RequestParam("email") String emailRequest, HttpServletResponse response) {
+		if (userRepository.countByEmail(emailRequest) > 0) {
 			response.setStatus(400);
 			return new StatusObject("fail", "email exists");
 		} else {
@@ -42,20 +42,20 @@ public class UserController {
 	}
 
 	// 通过邮箱注册
-	@RequestMapping(path = "/emailRegister", method = RequestMethod.POST)
+	@RequestMapping(path = "/service/emailRegister", method = RequestMethod.PUT)
 	public StatusObject emailRegister(@ModelAttribute User userRequest, HttpServletResponse response)
 			throws CloneNotSupportedException {
 		User user = userRepository.save(userRequest.clone());
-		// 生成用户的同时生成一个空的用户信息
+		//生成用户的同时生成一个空的用户信息
 		Information information = new Information();
-		information.setUserId(user.getUserId());
+		information.setUserid(user.getUserid());
 		informationRepository.save(information);
 		response.setStatus(200);
 		return new StatusObject("success", "email registered");
 	}
 
 	// 邮箱登录
-	@RequestMapping(path = "/emailLogin", method = RequestMethod.POST)
+	@RequestMapping(path = "/service/emailLogin", method = RequestMethod.GET)
 	public StatusObject emailLogin(@ModelAttribute User userRequest, HttpServletResponse response) {
 		User user = userRepository.findByEmail(userRequest.getEmail());
 		if (user == null) {
@@ -72,10 +72,10 @@ public class UserController {
 	}
 
 	// 修改密码
-	@RequestMapping(path = "/updatePassword", method = RequestMethod.POST)
+	@RequestMapping(path = "/service/passwordUpdate", method = RequestMethod.POST)
 	public StatusObject updatePassword(@ModelAttribute User userRequest,
 			@RequestParam("newPassword") String newPassword, HttpServletResponse response) {
-		User user = userRepository.findByUserId(userRequest.getUserId());
+		User user = userRepository.findByUserid(userRequest.getUserid());
 		if (!userRequest.getPassword().equals(user.getPassword())) {
 			response.setStatus(400);
 			return new StatusObject("fail", "password is not correct");
