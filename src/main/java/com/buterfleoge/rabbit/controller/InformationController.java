@@ -1,6 +1,5 @@
 package com.buterfleoge.rabbit.controller;
 
-
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.buterfleoge.whale.StatusObject;
 import com.buterfleoge.whale.dao.InformationRepository;
-import com.buterfleoge.whale.eo.Information;
-
+import com.buterfleoge.whale.type.entity.Information;
 
 @RestController
 public class InformationController {
