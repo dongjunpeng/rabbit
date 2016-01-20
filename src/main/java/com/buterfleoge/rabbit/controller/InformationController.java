@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.buterfleoge.whale.dao.InformationRepository;
-import com.buterfleoge.whale.type.entity.Information;
+import com.buterfleoge.whale.type.entity.AccountSetting;
 import com.buterfleoge.whale.type.protocol.Response;
 
 @RestController
@@ -21,18 +21,17 @@ public class InformationController {
 
     // 返回用户信息
     @RequestMapping(value = "/information/{userid}", method = RequestMethod.GET)
-    public Information getInformation(@PathVariable long userid, HttpServletResponse response) {
+    public AccountSetting getInformation(@PathVariable long userid, HttpServletResponse response) {
         response.setStatus(200);
         return informationRepository.findByUserid(userid);
     }
 
     // 更新用户信息
-    @RequestMapping(value = "/information/{userid}", method = RequestMethod.POST)
-    public Response<String> updateInformation(@PathVariable long userid, @ModelAttribute Information informationRequest,
+    @RequestMapping(value = "/information/{accountid}", method = RequestMethod.POST)
+    public Response<String> updateInformation(@PathVariable long accountid, @ModelAttribute AccountSetting accountSetting,
             HttpServletResponse response) throws CloneNotSupportedException {
-        Information information = informationRequest.clone();
-        information.setUserid(userid);
-        informationRepository.save(information);
+    	accountSetting.setAccountid(accountid);;
+        informationRepository.save(accountSetting);
         response.setStatus(200);
         return new Response<String>();
     }

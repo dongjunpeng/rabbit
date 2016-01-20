@@ -23,7 +23,6 @@ public class RegisterServiceImpl implements RegisterService {
     @Autowired
     private AccountBiz accountBiz;
 
-    @Override
     public void registerByEmail(RegisterRequest request) throws Exception {
         String email = request.getEmail();
         String password = request.getPassword();
@@ -38,7 +37,7 @@ public class RegisterServiceImpl implements RegisterService {
         }
 
         try {
-            accountBiz.createAccount(email, password, AccountType.user);
+            accountBiz.createAccount(email, password, AccountType.COMMON);
         } catch (IllegalArgumentException e) {
 
         } catch (Exception e) {
