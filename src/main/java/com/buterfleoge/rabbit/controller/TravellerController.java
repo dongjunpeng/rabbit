@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.buterfleoge.whale.dao.TravellerRepository;
 import com.buterfleoge.whale.type.entity.AccountInfo;
-import com.buterfleoge.whale.type.entity.Traveller;
+import com.buterfleoge.whale.type.entity.TravellerInfo;
 import com.buterfleoge.whale.type.protocol.Response;
 
 @RestController
@@ -33,19 +33,19 @@ public class TravellerController {
     // 增加旅客信息
     @RequestMapping(path = "/traveller", method = RequestMethod.PUT)
     public Response<String> addTraveller(@ModelAttribute AccountInfo userRequest,
-            @ModelAttribute Traveller travellerRequest,
+            @ModelAttribute TravellerInfo travellerInfo,
             HttpServletResponse response) throws CloneNotSupportedException {
-        Traveller traveller = travellerRequest.clone();
+
         // traveller.setUserid(userRequest.getUserid());
-        travellerRepository.save(traveller);
+        travellerRepository.save(travellerInfo);
         response.setStatus(201);
         return new Response<String>();
     }
 
     // 列出所有旅客信息
     @RequestMapping(path = "/traveller/{userid}", method = RequestMethod.GET)
-    public Iterable<Traveller> getTravellerByUserid(@PathVariable("userid") long userid, HttpServletResponse response) {
-        Iterable<Traveller> iterable = travellerRepository.findByUserid(userid);
+    public Iterable<TravellerInfo> getTravellerByUserid(@PathVariable("userid") long userid, HttpServletResponse response) {
+        Iterable<TravellerInfo> iterable = travellerRepository.findByAccountid(userid);
         if (iterable.iterator().hasNext()) {
             response.setStatus(200);
             return iterable;
@@ -58,11 +58,10 @@ public class TravellerController {
     // 修改旅客信息
     @RequestMapping(path = "/traveller/{travellerId}", method = RequestMethod.POST)
     public Response<String> updateTraveller(@PathVariable("travellerId") long travellerId,
-            @ModelAttribute Traveller travellerRequest, HttpServletResponse response)
+            @ModelAttribute TravellerInfo travellerInfo, HttpServletResponse response)
                     throws CloneNotSupportedException {
-        Traveller traveller = travellerRequest.clone();
-        traveller.setTravellerId(travellerId);
-        travellerRepository.save(traveller);
+    	travellerInfo.setTravellerid(travellerId);
+        travellerRepository.save(travellerInfo);
         response.setStatus(200);
         return new Response<String>();
     }
