@@ -23,7 +23,7 @@ public class InformationController {
     @RequestMapping(value = "/information/{userid}", method = RequestMethod.GET)
     public AccountSetting getInformation(@PathVariable long userid, HttpServletResponse response) {
         response.setStatus(200);
-        return informationRepository.findByUserid(userid);
+        return informationRepository.findByAccountid(userid);
     }
 
     // 更新用户信息

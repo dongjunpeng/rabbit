@@ -45,7 +45,7 @@ public class TravellerController {
     // 列出所有旅客信息
     @RequestMapping(path = "/traveller/{userid}", method = RequestMethod.GET)
     public Iterable<TravellerInfo> getTravellerByUserid(@PathVariable("userid") long userid, HttpServletResponse response) {
-        Iterable<TravellerInfo> iterable = travellerRepository.findByUserid(userid);
+        Iterable<TravellerInfo> iterable = travellerRepository.findByAccountid(userid);
         if (iterable.iterator().hasNext()) {
             response.setStatus(200);
             return iterable;
