@@ -28,9 +28,11 @@ public class InformationController {
 
     // 更新用户信息
     @RequestMapping(value = "/information/{accountid}", method = RequestMethod.POST)
-    public Response<String> updateInformation(@PathVariable long accountid, @ModelAttribute AccountSetting accountSetting,
-            HttpServletResponse response) throws CloneNotSupportedException {
-    	accountSetting.setAccountid(accountid);;
+    public Response<String> updateInformation(@PathVariable long accountid,
+            @ModelAttribute AccountSetting accountSetting, HttpServletResponse response)
+                    throws CloneNotSupportedException {
+        accountSetting.setAccountid(accountid);
+        ;
         informationRepository.save(accountSetting);
         response.setStatus(200);
         return new Response<String>();

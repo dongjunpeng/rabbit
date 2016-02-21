@@ -1,18 +1,23 @@
 package com.buterfleoge.rabbit.controller;
 
+import java.util.Arrays;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.buterfleoge.rabbit.service.impl.RegisterServiceImpl;
-import com.buterfleoge.whale.biz.AccountBiz;
+import com.buterfleoge.whale.biz.account.AccountBiz;
+import com.buterfleoge.whale.constant.Constants.Status;
 import com.buterfleoge.whale.type.AccountType;
+import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
+import com.buterfleoge.whale.type.protocol.account.EmailExistRequestItem;
+import com.buterfleoge.whale.type.protocol.account.LoginRequestItem;
+import com.buterfleoge.whale.type.protocol.account.RegisterRequestItem;
 
 /**
  * 账户相关处理
@@ -24,103 +29,73 @@ import com.buterfleoge.whale.type.protocol.Response;
 @RequestMapping("/account")
 public class AccountController {
 
-	@Autowired
-	private AccountBiz accountBiz;
-	private static final Logger LOG = Logger.getLogger(RegisterServiceImpl.class);
+    private static final Logger LOG = Logger.getLogger(AccountController.class);
 
-	@RequestMapping("/qq")
-	public String qqVisit() {
+    @Autowired
+    private AccountBiz accountBiz;
 
-		return null;
-	}
+    @ResponseBody
+    @RequestMapping(value = "/email", method = RequestMethod.POST)
+    public Response<Void> checkEmailExist(Request<EmailExistRequestItem> request) {
+        Response<Void> response = new Response<Void>();
+        try {
+            accountBiz.isEmailExist(request, response);
+        } catch (Exception e) {
+            LOG.error("Check email exist failed", e);
+            response.setStatus(Status.SYSTEM_ERROR);
+        }
+        return response;
+    }
 
-	@RequestMapping("/wx")
-	public String wxVisit() {
+    @ResponseBody
+    @RequestMapping(value = "/register", method = RequestMethod.POST)
+    public Response<Void> register(Request<RegisterRequestItem> request) {
+        Response<Void> response = new Response<Void>();
+        try {
+            Request<EmailExistRequestItem> emailEmailRequest = createEmailExistRequestFromRegisterRequest(request);
+            accountBiz.isEmailExist(emailEmailRequest, response);
+            if (response.hasError()) {
+                return response;
+            }
+            RegisterRequestItem requestItem = request.getFirstDataItem();
+            requestItem.setType(AccountType.USER);
+            accountBiz.registerByEmail(request, response);
+        } catch (Exception e) {
+            LOG.error("Register failed", e);
+            response.setStatus(Status.SYSTEM_ERROR);
+        }
+        return response;
+    }
 
-		return null;
-	}
+    /**
+     * @param request
+     * @return
+     */
+    protected Request<EmailExistRequestItem>
+            createEmailExistRequestFromRegisterRequest(Request<RegisterRequestItem> request) {
+        String email = request.getFirstDataItem().getEmail();
+        Request<EmailExistRequestItem> emailEmailRequest = new Request<EmailExistRequestItem>();
+        emailEmailRequest.setLogid(request.getLogid());
+        emailEmailRequest.setGlobalid(request.getGlobalid());
+        emailEmailRequest.setData(Arrays.asList(new EmailExistRequestItem(email)));
+        return emailEmailRequest;
+    }
 
-	// email是否存在
-	@ResponseBody
-	@RequestMapping("/email")
-	public Response<String> emailExist(@RequestParam("email") String email) {
+    // email登陆
+    @RequestMapping("/login")
+    @ResponseBody
+    public Response<AccountInfo> login(Request<LoginRequestItem> request) {
+        Response<AccountInfo> response = new Response<AccountInfo>();
 
-		Response<String> response = new Response<String>();
+        try {
+            request.getFirstDataItem().setType(AccountType.USER);
 
-		try {
-			// 存在返回fail，不存在返回ok
-			if (accountBiz.isEmailExist(email)) {
-				response.setStatus(Response.STATUS_FAIL);
-				response.setShowMessage("email已注册!");
-				return response;
-			} else {
-				response.setStatus(Response.STATUS_OK);
-				return response;
-			}
-		} catch (IllegalArgumentException e) {
-			// email是否合法
-			response.setStatus(Response.STATUS_PARAM_ERROR);
-			response.setShowMessage("email参数非法!");
-			return response;
-		} catch (Exception e) {
-			LOG.error("Check email exist failed", e);
-			response.setStatus(Response.STATUS_SYS_ERROR);
-			response.setShowMessage("查询失败");
-			return response;
-		}
-
-	}
-
-	// email注册
-	@RequestMapping(value = "/register", method = RequestMethod.POST)
-	@ResponseBody
-	public Response<String> register(@RequestParam("email") String email, @RequestParam("password") String password) {
-
-		Response<String> response = new Response<String>();
-
-		try {
-			accountBiz.createAccount(email, password, AccountType.COMMON);
-			response.setStatus(Response.STATUS_OK);
-			return response;
-		} catch (IllegalArgumentException e) {
-			response.setStatus(Response.STATUS_PARAM_ERROR);
-			response.setShowMessage(e.getMessage());
-			return response;
-		} catch (Exception e) {
-			LOG.error("register failed", e);
-			response.setStatus(Response.STATUS_SYS_ERROR);
-			response.setShowMessage("注册失败");
-			return response;
-		}
-	}
-
-	// email登陆
-	@RequestMapping("/login")
-	@ResponseBody
-	public Response<String> login(@RequestParam("email") String email, @RequestParam("password") String password) {
-		Response<String> response = new Response<String>();
-
-		try {
-			if (accountBiz.emailLogin(email, password)) {
-				response.setStatus(Response.STATUS_OK);
-				return response;
-			} else {
-				response.setStatus(Response.STATUS_FAIL);
-				response.setShowMessage("EMAIL或密码错误");
-				return response;
-			}
-		} catch (IllegalArgumentException e) {
-			response.setStatus(Response.STATUS_PARAM_ERROR);
-			response.setShowMessage(e.getMessage());
-			return response;
-		} catch (Exception e) {
-			LOG.error("login failed", e);
-			response.setStatus(Response.STATUS_SYS_ERROR);
-			response.setShowMessage("登陆失败");
-			return response;
-		}
-
-	}
-	
+            System.out.println();
+        } catch (Exception e) {
+            LOG.error("Login failed", e);
+            response.setStatus(Status.SYSTEM_ERROR);
+        }
+        return response;
+    }
 
 }
