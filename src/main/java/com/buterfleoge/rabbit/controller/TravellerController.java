@@ -33,8 +33,8 @@ public class TravellerController {
     // 增加旅客信息
     @RequestMapping(path = "/traveller", method = RequestMethod.PUT)
     public Response<String> addTraveller(@ModelAttribute AccountInfo userRequest,
-            @ModelAttribute TravellerInfo travellerInfo,
-            HttpServletResponse response) throws CloneNotSupportedException {
+            @ModelAttribute TravellerInfo travellerInfo, HttpServletResponse response)
+                    throws CloneNotSupportedException {
 
         // traveller.setUserid(userRequest.getUserid());
         travellerRepository.save(travellerInfo);
@@ -44,7 +44,8 @@ public class TravellerController {
 
     // 列出所有旅客信息
     @RequestMapping(path = "/traveller/{userid}", method = RequestMethod.GET)
-    public Iterable<TravellerInfo> getTravellerByUserid(@PathVariable("userid") long userid, HttpServletResponse response) {
+    public Iterable<TravellerInfo> getTravellerByUserid(@PathVariable("userid") long userid,
+            HttpServletResponse response) {
         Iterable<TravellerInfo> iterable = travellerRepository.findByAccountid(userid);
         if (iterable.iterator().hasNext()) {
             response.setStatus(200);
@@ -60,7 +61,7 @@ public class TravellerController {
     public Response<String> updateTraveller(@PathVariable("travellerId") long travellerId,
             @ModelAttribute TravellerInfo travellerInfo, HttpServletResponse response)
                     throws CloneNotSupportedException {
-    	travellerInfo.setTravellerid(travellerId);
+        travellerInfo.setTravellerid(travellerId);
         travellerRepository.save(travellerInfo);
         response.setStatus(200);
         return new Response<String>();
