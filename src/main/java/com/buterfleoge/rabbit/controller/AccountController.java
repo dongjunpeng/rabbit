@@ -86,11 +86,9 @@ public class AccountController {
     @ResponseBody
     public Response<AccountInfo> login(Request<LoginRequestItem> request) {
         Response<AccountInfo> response = new Response<AccountInfo>();
-
         try {
             request.getFirstDataItem().setType(AccountType.USER);
-
-            System.out.println();
+            accountBiz.loginByEmail(request, response);
         } catch (Exception e) {
             LOG.error("Login failed", e);
             response.setStatus(Status.SYSTEM_ERROR);
