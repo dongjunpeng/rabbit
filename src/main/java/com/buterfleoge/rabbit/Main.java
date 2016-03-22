@@ -6,9 +6,7 @@ import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
 import org.springframework.boot.orm.jpa.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 /**
  * 
@@ -22,8 +20,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @ComponentScan("com.buterfleoge")
 @EntityScan(basePackages = "com.buterfleoge.whale.type.entity")
 @EnableJpaRepositories("com.buterfleoge.whale.dao")
-@EnableWebMvc
-@ImportResource("applicationContext.xml")
 public class Main extends WebMvcAutoConfiguration {
 
     public static void main(String[] args) {
