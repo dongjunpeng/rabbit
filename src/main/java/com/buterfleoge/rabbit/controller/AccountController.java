@@ -1,23 +1,31 @@
 package com.buterfleoge.rabbit.controller;
 
-import java.util.Arrays;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.buterfleoge.whale.Constants.SessionKey;
+import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.account.AccountBiz;
-import com.buterfleoge.whale.constant.Constants.Status;
+import com.buterfleoge.whale.dao.AccountSettingRepository;
 import com.buterfleoge.whale.type.AccountType;
 import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.entity.AccountSetting;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
-import com.buterfleoge.whale.type.protocol.account.EmailExistRequestItem;
-import com.buterfleoge.whale.type.protocol.account.LoginRequestItem;
-import com.buterfleoge.whale.type.protocol.account.RegisterRequestItem;
+import com.buterfleoge.whale.type.protocol.account.EmailExistRequest;
+import com.buterfleoge.whale.type.protocol.account.GetBasicInfoResponse;
+import com.buterfleoge.whale.type.protocol.account.LoginRequest;
+import com.buterfleoge.whale.type.protocol.account.RegisterRequest;
+import com.buterfleoge.whale.type.protocol.account.RegisterResponse;
+import com.buterfleoge.whale.type.protocol.account.ValidateEmailRequest;
 
 /**
  * 账户相关处理
@@ -29,71 +37,96 @@ import com.buterfleoge.whale.type.protocol.account.RegisterRequestItem;
 @RequestMapping("/account")
 public class AccountController {
 
-    private static final Logger LOG = Logger.getLogger(AccountController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AccountController.class);
 
     @Autowired
     private AccountBiz accountBiz;
 
+    @Autowired
+    private AccountSettingRepository accountSettingRepository;
+
+    @Autowired
+    private HttpServletRequest httpRequest;
+
     @ResponseBody
     @RequestMapping(value = "/email", method = RequestMethod.POST)
-    public Response<Void> checkEmailExist(Request<EmailExistRequestItem> request) {
-        Response<Void> response = new Response<Void>();
-        try {
-            accountBiz.isEmailExist(request, response);
-        } catch (Exception e) {
-            LOG.error("Check email exist failed", e);
-            response.setStatus(Status.SYSTEM_ERROR);
-        }
+    public Response checkEmailExist(EmailExistRequest request) throws Exception {
+        Response response = new Response();
+        accountBiz.isEmailExist(request, response);
         return response;
     }
 
     @ResponseBody
     @RequestMapping(value = "/register", method = RequestMethod.POST)
-    public Response<Void> register(Request<RegisterRequestItem> request) {
-        Response<Void> response = new Response<Void>();
-        try {
-            Request<EmailExistRequestItem> emailEmailRequest = createEmailExistRequestFromRegisterRequest(request);
-            accountBiz.isEmailExist(emailEmailRequest, response);
-            if (response.hasError()) {
-                return response;
+    public RegisterResponse register(RegisterRequest request) throws Exception {
+        RegisterResponse response = new RegisterResponse();
+        request.setType(AccountType.USER);
+        accountBiz.registerByEmail(request, response);
+        if (response.hasError()) {
+            return response;
+        }
+        response.getAccountInfo().setPassword(null);
+        HttpSession session = httpRequest.getSession(true);
+        session.setAttribute(SessionKey.ACCOUNT_BASIC_INF, response.getAccountInfo());
+        return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
+    public GetBasicInfoResponse getBasicInfo(Request request) throws Exception {
+        HttpSession session = httpRequest.getSession(false);
+        if (session == null) {
+            return null;
+        }
+
+        GetBasicInfoResponse response = new GetBasicInfoResponse();
+        Object basicInfo = session.getAttribute(SessionKey.ACCOUNT_BASIC_INF);
+        if (basicInfo == null || !(basicInfo instanceof GetBasicInfoResponse)) {
+            return response;
+        } else {
+            GetBasicInfoResponse getBasicInfoResponse = (GetBasicInfoResponse) basicInfo;
+            AccountInfo accountInfo = getBasicInfoResponse.getAccountInfo();
+            AccountSetting accountSetting = getBasicInfoResponse.getAccountSetting();
+            if (accountSetting == null) {
+                try {
+                    accountSetting = accountSettingRepository.findOne(accountInfo.getAccountid());
+                    getBasicInfoResponse.setAccountSetting(accountSetting);
+                } catch (Exception e) {
+                    LOG.error("find accountSetting failed, accountInfo: " + accountInfo, e);
+                    response.setStatus(Status.DB_ERROR);
+                    return response;
+                }
             }
-            RegisterRequestItem requestItem = request.getFirstDataItem();
-            requestItem.setType(AccountType.USER);
-            accountBiz.registerByEmail(request, response);
-        } catch (Exception e) {
-            LOG.error("Register failed", e);
-            response.setStatus(Status.SYSTEM_ERROR);
+            response.setLogin(true);
+            response.setAccountInfo(accountInfo);
+            response.setAccountSetting(accountSetting);
         }
         return response;
     }
 
-    /**
-     * @param request
-     * @return
-     */
-    protected Request<EmailExistRequestItem>
-            createEmailExistRequestFromRegisterRequest(Request<RegisterRequestItem> request) {
-        String email = request.getFirstDataItem().getEmail();
-        Request<EmailExistRequestItem> emailEmailRequest = new Request<EmailExistRequestItem>();
-        emailEmailRequest.setLogid(request.getLogid());
-        emailEmailRequest.setGlobalid(request.getGlobalid());
-        emailEmailRequest.setData(Arrays.asList(new EmailExistRequestItem(email)));
-        return emailEmailRequest;
+    @ResponseBody
+    @RequestMapping(value = "/validateEmail", method = RequestMethod.GET)
+    public Response validateEmail(ValidateEmailRequest request) throws Exception {
+        Response response = new Response();
+        accountBiz.validateEmail(request, response);
+        return response;
     }
 
     // email登陆
-    @RequestMapping("/login")
     @ResponseBody
-    public Response<AccountInfo> login(Request<LoginRequestItem> request) {
-        Response<AccountInfo> response = new Response<AccountInfo>();
-        try {
-            request.getFirstDataItem().setType(AccountType.USER);
-            accountBiz.loginByEmail(request, response);
-        } catch (Exception e) {
-            LOG.error("Login failed", e);
-            response.setStatus(Status.SYSTEM_ERROR);
-        }
-        return response;
+    @RequestMapping("/login")
+    public Response login(LoginRequest request) {
+        // Response<AccountInfo> response = new Response<AccountInfo>();
+        // try {
+        // request.getFirstDataItem().setType(AccountType.USER);
+        // accountBiz.loginByEmail(request, response);
+        // } catch (Exception e) {
+        // LOG.error("Login failed", e);
+        // response.setStatus(Status.SYSTEM_ERROR);
+        // }
+        // return response;
+        return null;
     }
+
 
 }
