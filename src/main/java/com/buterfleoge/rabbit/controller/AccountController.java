@@ -22,7 +22,13 @@ import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.account.EmailExistRequest;
 import com.buterfleoge.whale.type.protocol.account.GetBasicInfoResponse;
+import com.buterfleoge.whale.type.protocol.account.GetContactsRequest;
+import com.buterfleoge.whale.type.protocol.account.GetContactsResponse;
+import com.buterfleoge.whale.type.protocol.account.GetOrdersRequest;
+import com.buterfleoge.whale.type.protocol.account.GetOrdersResponse;
 import com.buterfleoge.whale.type.protocol.account.LoginRequest;
+import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
+import com.buterfleoge.whale.type.protocol.account.PostContactsRespose;
 import com.buterfleoge.whale.type.protocol.account.RegisterRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterResponse;
 import com.buterfleoge.whale.type.protocol.account.ValidateEmailRequest;
@@ -83,24 +89,23 @@ public class AccountController {
         Object basicInfo = session.getAttribute(SessionKey.ACCOUNT_BASIC_INF);
         if (basicInfo == null || !(basicInfo instanceof GetBasicInfoResponse)) {
             return response;
-        } else {
-            GetBasicInfoResponse getBasicInfoResponse = (GetBasicInfoResponse) basicInfo;
-            AccountInfo accountInfo = getBasicInfoResponse.getAccountInfo();
-            AccountSetting accountSetting = getBasicInfoResponse.getAccountSetting();
-            if (accountSetting == null) {
-                try {
-                    accountSetting = accountSettingRepository.findOne(accountInfo.getAccountid());
-                    getBasicInfoResponse.setAccountSetting(accountSetting);
-                } catch (Exception e) {
-                    LOG.error("find accountSetting failed, accountInfo: " + accountInfo, e);
-                    response.setStatus(Status.DB_ERROR);
-                    return response;
-                }
-            }
-            response.setLogin(true);
-            response.setAccountInfo(accountInfo);
-            response.setAccountSetting(accountSetting);
         }
+        GetBasicInfoResponse getBasicInfoResponse = (GetBasicInfoResponse) basicInfo;
+        AccountInfo accountInfo = getBasicInfoResponse.getAccountInfo();
+        AccountSetting accountSetting = getBasicInfoResponse.getAccountSetting();
+        if (accountSetting == null) {
+            try {
+                accountSetting = accountSettingRepository.findOne(accountInfo.getAccountid());
+                getBasicInfoResponse.setAccountSetting(accountSetting);
+            } catch (Exception e) {
+                LOG.error("find accountSetting failed, accountInfo: " + accountInfo, e);
+                response.setStatus(Status.DB_ERROR);
+                return response;
+            }
+        }
+        response.setLogin(true);
+        response.setAccountInfo(accountInfo);
+        response.setAccountSetting(accountSetting);
         return response;
     }
 
@@ -110,6 +115,36 @@ public class AccountController {
         Response response = new Response();
         accountBiz.validateEmail(request, response);
         return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/contacts", method = RequestMethod.GET)
+    public GetContactsResponse getContacts(GetContactsRequest request) throws Exception {
+        GetContactsResponse response = new GetContactsResponse();
+        accountBiz.getContacts(request, response);
+        return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/contacts", method = RequestMethod.POST)
+    public Response postContacts(PostContactsRequest request) throws Exception {
+        PostContactsRespose response = new PostContactsRespose();
+        accountBiz.postContacts(request, response);
+        return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/orders", method = RequestMethod.GET)
+    public GetOrdersResponse getOrders(GetOrdersRequest request) {
+
+        return null;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/orders", method = RequestMethod.POST)
+    public GetOrdersResponse postOrders(GetOrdersRequest request) {
+
+        return null;
     }
 
     // email登陆
@@ -127,6 +162,5 @@ public class AccountController {
         // return response;
         return null;
     }
-
 
 }
