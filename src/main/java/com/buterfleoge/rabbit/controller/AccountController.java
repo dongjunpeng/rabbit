@@ -32,6 +32,7 @@ import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsResponse;
 import com.buterfleoge.whale.type.protocol.account.RegisterRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterResponse;
+import com.buterfleoge.whale.type.protocol.account.UpdateBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.ValidateEmailRequest;
 
 /**
@@ -66,6 +67,8 @@ public class AccountController {
 	@ResponseBody
 	@RequestMapping(value = "/register", method = RequestMethod.POST)
 	public RegisterResponse register(RegisterRequest request) throws Exception {
+		//TODO
+		//RegisterResponse改了
 		RegisterResponse response = new RegisterResponse();
 		request.setType(AccountType.USER);
 		accountBiz.registerByEmail(request, response);
@@ -107,6 +110,16 @@ public class AccountController {
 		response.setLogin(true);
 		response.setAccountInfo(accountInfo);
 		response.setAccountSetting(accountSetting);
+		return response;
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/basicinfo", method = RequestMethod.POST)
+	public Response updateBasicInfo(UpdateBasicInfoRequest request) throws Exception {
+		// 是不是做个验证？
+
+		Response response = new Response();
+		accountBiz.updateBasicInfo(request, response);
 		return response;
 	}
 
