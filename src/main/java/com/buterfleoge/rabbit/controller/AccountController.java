@@ -30,6 +30,7 @@ import com.buterfleoge.whale.type.protocol.account.GetOrdersResponse;
 import com.buterfleoge.whale.type.protocol.account.LoginRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsResponse;
+import com.buterfleoge.whale.type.protocol.account.PutContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterResponse;
 import com.buterfleoge.whale.type.protocol.account.UpdateBasicInfoRequest;
@@ -67,8 +68,7 @@ public class AccountController {
 	@ResponseBody
 	@RequestMapping(value = "/register", method = RequestMethod.POST)
 	public RegisterResponse register(RegisterRequest request) throws Exception {
-		//TODO
-		//RegisterResponse改了
+
 		RegisterResponse response = new RegisterResponse();
 		request.setType(AccountType.USER);
 		accountBiz.registerByEmail(request, response);
@@ -89,11 +89,13 @@ public class AccountController {
 			return null;
 		}
 
+		// TODO
 		GetBasicInfoResponse response = new GetBasicInfoResponse();
 		Object basicInfo = session.getAttribute(SessionKey.ACCOUNT_BASIC_INF);
 		if (basicInfo == null || !(basicInfo instanceof GetBasicInfoResponse)) {
 			return response;
 		}
+
 		GetBasicInfoResponse getBasicInfoResponse = (GetBasicInfoResponse) basicInfo;
 		AccountInfo accountInfo = getBasicInfoResponse.getAccountInfo();
 		AccountSetting accountSetting = getBasicInfoResponse.getAccountSetting();
@@ -116,7 +118,6 @@ public class AccountController {
 	@ResponseBody
 	@RequestMapping(value = "/basicinfo", method = RequestMethod.POST)
 	public Response updateBasicInfo(UpdateBasicInfoRequest request) throws Exception {
-		// 是不是做个验证？
 
 		Response response = new Response();
 		accountBiz.updateBasicInfo(request, response);
@@ -144,6 +145,14 @@ public class AccountController {
 	public Response postContacts(PostContactsRequest request) throws Exception {
 		PostContactsResponse response = new PostContactsResponse();
 		accountBiz.postContacts(request, response);
+		return response;
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/contacts", method = RequestMethod.PUT)
+	public Response putContacts(PutContactsRequest request) throws Exception {
+		Response response = new Response();
+		accountBiz.putContacts(request, response);
 		return response;
 	}
 
