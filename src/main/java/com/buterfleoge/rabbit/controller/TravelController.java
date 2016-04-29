@@ -3,8 +3,6 @@
  */
 package com.buterfleoge.rabbit.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,24 +27,22 @@ import com.buterfleoge.whale.type.protocol.travel.GetRouteResponse;
 @RequestMapping("/travel")
 public class TravelController {
 
-	private static final Logger LOG = LoggerFactory.getLogger(TravelController.class);
+    @Autowired
+    private TravelBiz travelBiz;
 
-	@Autowired
-	private TravelBiz travelBiz;
+    @ResponseBody
+    @RequestMapping(value = "/route", method = RequestMethod.GET)
+    public GetRouteResponse getRoute(GetRouteRequest request) throws Exception {
+        GetRouteResponse response = new GetRouteResponse();
+        travelBiz.getRoute(request, response);
+        return response;
+    }
 
-	@ResponseBody
-	@RequestMapping(value = "/route", method = RequestMethod.GET)
-	public GetRouteResponse getRoute(GetRouteRequest request) throws Exception {
-		GetRouteResponse response = new GetRouteResponse();
-		travelBiz.getRoute(request, response);
-		return response;
-	}
-	
-	@ResponseBody
-	@RequestMapping(value = "/group", method = RequestMethod.GET)
-	public GetGroupResponse getGroup(GetGroupRequest request) throws Exception {
-		GetGroupResponse response = new GetGroupResponse();
-		travelBiz.getGroup(request, response);
-		return response;
-	}
+    @ResponseBody
+    @RequestMapping(value = "/group", method = RequestMethod.GET)
+    public GetGroupResponse getGroup(GetGroupRequest request) throws Exception {
+        GetGroupResponse response = new GetGroupResponse();
+        travelBiz.getGroup(request, response);
+        return response;
+    }
 }
