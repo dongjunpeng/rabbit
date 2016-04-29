@@ -67,8 +67,8 @@ public class AccountController {
 	@ResponseBody
 	@RequestMapping(value = "/register", method = RequestMethod.POST)
 	public RegisterResponse register(RegisterRequest request) throws Exception {
-		//TODO
-		//RegisterResponse改了
+		// TODO
+		// RegisterResponse改了
 		RegisterResponse response = new RegisterResponse();
 		request.setType(AccountType.USER);
 		accountBiz.registerByEmail(request, response);
