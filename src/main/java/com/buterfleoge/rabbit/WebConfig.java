@@ -21,7 +21,6 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     static {
         viewMap.put("/register", "register");
-        viewMap.put("/product", "product");
     }
 
     @Override
