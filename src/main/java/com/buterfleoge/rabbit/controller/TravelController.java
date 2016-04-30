@@ -46,4 +46,9 @@ public class TravelController {
         return response;
     }
     
+    @RequestMapping(value = "/*", method = RequestMethod.GET)
+    public String getTravelPage() {
+        return "travel";
+    }
+
 }
