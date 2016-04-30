@@ -12,25 +12,28 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buterfleoge.whale.Constants.SessionKey;
+import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.account.AccountBiz;
 import com.buterfleoge.whale.dao.AccountSettingRepository;
 import com.buterfleoge.whale.type.AccountType;
+import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.entity.AccountSetting;
+import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.account.DeleteContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.EmailExistRequest;
-import com.buterfleoge.whale.type.protocol.account.GetBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.GetBasicInfoResponse;
 import com.buterfleoge.whale.type.protocol.account.GetContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.GetContactsResponse;
 import com.buterfleoge.whale.type.protocol.account.GetOrdersRequest;
 import com.buterfleoge.whale.type.protocol.account.GetOrdersResponse;
 import com.buterfleoge.whale.type.protocol.account.LoginRequest;
-import com.buterfleoge.whale.type.protocol.account.PostBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsResponse;
 import com.buterfleoge.whale.type.protocol.account.PutContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterResponse;
+import com.buterfleoge.whale.type.protocol.account.UpdateBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.ValidateEmailRequest;
 
 /**
@@ -78,28 +81,43 @@ public class AccountController {
 		return response;
 	}
 
-	// 测试用
-	@ResponseBody
-	@RequestMapping(value = "/basicinfo", method = RequestMethod.POST)
-	public Response putBasicInfo() throws Exception {
-		Response response = new Response();
-
-		accountBiz.createBasicInfo();
-		response.setStatus(0);
-		return response;
-	}
-
 	@ResponseBody
 	@RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
-	public GetBasicInfoResponse getBasicInfo(GetBasicInfoRequest request) throws Exception {
+	public GetBasicInfoResponse getBasicInfo(Request request) throws Exception {
+		HttpSession session = httpRequest.getSession(false);
+		if (session == null) {
+			return null;
+		}
+
+		// TODO
 		GetBasicInfoResponse response = new GetBasicInfoResponse();
-		accountBiz.getBasicInfo(request, response);
+		Object basicInfo = session.getAttribute(SessionKey.ACCOUNT_BASIC_INF);
+		if (basicInfo == null || !(basicInfo instanceof GetBasicInfoResponse)) {
+			return response;
+		}
+
+		GetBasicInfoResponse getBasicInfoResponse = (GetBasicInfoResponse) basicInfo;
+		AccountInfo accountInfo = getBasicInfoResponse.getAccountInfo();
+		AccountSetting accountSetting = getBasicInfoResponse.getAccountSetting();
+		if (accountSetting == null) {
+			try {
+				accountSetting = accountSettingRepository.findOne(accountInfo.getAccountid());
+				getBasicInfoResponse.setAccountSetting(accountSetting);
+			} catch (Exception e) {
+				LOG.error("find accountSetting failed, accountInfo: " + accountInfo, e);
+				response.setStatus(Status.DB_ERROR);
+				return response;
+			}
+		}
+		response.setLogin(true);
+		response.setAccountInfo(accountInfo);
+		response.setAccountSetting(accountSetting);
 		return response;
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/basicinfo", method = RequestMethod.PUT)
-	public Response updateBasicInfo(PostBasicInfoRequest request) throws Exception {
+	@RequestMapping(value = "/basicinfo", method = RequestMethod.POST)
+	public Response updateBasicInfo(UpdateBasicInfoRequest request) throws Exception {
 
 		Response response = new Response();
 		accountBiz.updateBasicInfo(request, response);
