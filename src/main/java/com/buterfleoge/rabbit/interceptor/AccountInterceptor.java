@@ -16,7 +16,7 @@ public class AccountInterceptor extends AuthInterceptor {
 
     @Override
     public int getOrder() {
-        return HIGHEST_PRECEDENCE + 1;
+        return HIGHEST_PRECEDENCE + 20;
     }
 
     @Override
@@ -29,7 +29,7 @@ public class AccountInterceptor extends AuthInterceptor {
         Long reqAccountid = null;
         Matcher matcher = ACCOUNT_PAGE_PATTERN.matcher(path);
         if (matcher.find()) {
-            String temp = matcher.group(0);
+            String temp = matcher.group(1);
             System.out.println(temp);
             reqAccountid = Long.parseLong(temp);
         } else {

@@ -4,9 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+import com.buterfleoge.rabbit.interceptor.AccountInterceptor;
+import com.buterfleoge.rabbit.interceptor.LoginStateInterceptor;
+import com.buterfleoge.rabbit.interceptor.WxLoginInterceptor;
+
 
 /**
  * spring mvc config
@@ -21,6 +29,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     static {
         viewMap.put("/register", "register");
+        viewMap.put("/", "forward:/index.html");
     }
 
     @Override
@@ -30,20 +39,26 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         }
     }
 
-    // @Bean(name = "loginInterceptor")
-    // public HandlerInterceptor getLoginInterceptor() {
-    // return new LoginInterceptor();
-    // }
-    //
-    // @Bean(name = "accountInterceptor")
-    // public HandlerInterceptor getAccountInterceptor() {
-    // return new AccountInterceptor();
-    // }
-    //
-    // @Override
-    // public void addInterceptors(InterceptorRegistry registry) {
-    // registry.addInterceptor(getLoginInterceptor());
-    // registry.addInterceptor(getAccountInterceptor());
-    // }
+    @Bean(name = "wxLoginInterceptor")
+    public HandlerInterceptor getWxLoginInterceptor() {
+        return new WxLoginInterceptor();
+    }
+
+    @Bean(name = "loginStateInterceptor")
+    public HandlerInterceptor getLoginStateInterceptor() {
+        return new LoginStateInterceptor();
+    }
+
+    @Bean(name = "accountInterceptor")
+    public HandlerInterceptor getAccountInterceptor() {
+        return new AccountInterceptor();
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(getWxLoginInterceptor());
+        registry.addInterceptor(getLoginStateInterceptor());
+        registry.addInterceptor(getAccountInterceptor());
+    }
 
 }
