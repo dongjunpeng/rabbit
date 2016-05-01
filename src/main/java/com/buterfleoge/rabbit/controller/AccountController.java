@@ -74,7 +74,7 @@ public class AccountController {
         }
         response.getAccountInfo().setPassword(null);
         HttpSession session = httpRequest.getSession(true);
-        session.setAttribute(SessionKey.ACCOUNT_BASIC_INF, response.getAccountInfo());
+        session.setAttribute(SessionKey.ACCOUNT_BASIC_INFO, response.getAccountInfo());
         return response;
     }
 

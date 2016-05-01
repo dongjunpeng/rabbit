@@ -4,12 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import HandlerInterceptor.AuthInterceptor;
+import com.buterfleoge.rabbit.interceptor.AccountInterceptor;
+import com.buterfleoge.rabbit.interceptor.LoginInterceptor;
 
 /**
  * spring mvc config
@@ -33,8 +36,20 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         }
     }
 
+    @Bean(name = "loginInterceptor")
+    public HandlerInterceptor getLoginInterceptor() {
+        return new LoginInterceptor();
+    }
+
+    @Bean(name = "accountInterceptor")
+    public HandlerInterceptor getAccountInterceptor() {
+        return new AccountInterceptor();
+    }
+
+    @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthInterceptor());
+        registry.addInterceptor(getLoginInterceptor());
+        registry.addInterceptor(getAccountInterceptor());
     }
 
 }
