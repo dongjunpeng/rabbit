@@ -6,9 +6,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -31,7 +34,9 @@ import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
  * @author xiezhenzong
  *
  */
-public class LoginInterceptor implements HandlerInterceptor, Ordered {
+public class LoginStateInterceptor implements HandlerInterceptor, Ordered {
+
+    private static final Logger LOG = LoggerFactory.getLogger(LoginStateInterceptor.class);
 
     @Autowired
     private WxBiz wxBiz;
@@ -48,7 +53,7 @@ public class LoginInterceptor implements HandlerInterceptor, Ordered {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-        String path = request.getPathInfo();
+        String path = request.getRequestURI();
         System.out.println(path);
         if (!shouldPreHandle(path)) {
             return true;
@@ -56,28 +61,38 @@ public class LoginInterceptor implements HandlerInterceptor, Ordered {
         HttpSession session = request.getSession();
         AccountBasicInfo basicInfo = (AccountBasicInfo) session.getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
         if (basicInfo != null) {
-            Long accountid = basicInfo.getAccountInfo().getAccountid();
-            WxAccessTokenResponse accessTokenResponse = (WxAccessTokenResponse) cacheTemplate.opsForValue()
-                    .get(CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid);
-            boolean isValid =
-                    wxBiz.isAccessTokenValid(accessTokenResponse.getAccess_token(), accessTokenResponse.getOpenid());
-            if (isValid) {
-                WxAccessTokenResponse refreshToken = wxBiz.refreshToken(accessTokenResponse.getRefresh_token());
-                cacheTemplate.opsForValue().set(CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid,
-                        refreshToken); // 用refreshToken来更新accessToken
-                return true;
-            } else {
-                response.sendRedirect("/wx/login");
+            try {
+                ValueOperations<String, Object> operations = cacheTemplate.opsForValue();
+                Long accountid = basicInfo.getAccountInfo().getAccountid();
+                WxAccessTokenResponse accessTokenResponse =
+                        (WxAccessTokenResponse) operations.get(getAccessTokenKey(accountid));
+                if (accessTokenResponse == null) {
+                    response.sendRedirect("/wx/login");
+                    return false;
+                }
+                boolean isValid = wxBiz.isAccessTokenValid(accessTokenResponse.getAccess_token(),
+                        accessTokenResponse.getOpenid());
+                if (isValid) {
+                    WxAccessTokenResponse refreshToken = wxBiz.refreshToken(accessTokenResponse.getRefresh_token());
+                    operations.set(getAccessTokenKey(accountid), refreshToken); // 用refreshToken来更新accessToken
+                    return true;
+                } else {
+                    response.sendRedirect("/wx/login");
+                    return false;
+                }
+            } catch (Exception e) {
+                LOG.error("validate access token failed", e);
+                response.sendRedirect("/wx/failed");
                 return false;
             }
         } else {
             Cookie[] cookies = request.getCookies();
-            Long accountid = null;
-            String token = null;
             if (ArrayUtils.isEmpty(cookies)) {
                 response.sendRedirect("/wx/login");
                 return false;
             }
+            Long accountid = null;
+            String token = null;
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals(CookieKey.ACCOUNTID)) {
                     accountid = Long.parseLong(cookie.getValue());
@@ -89,18 +104,24 @@ public class LoginInterceptor implements HandlerInterceptor, Ordered {
                 response.sendRedirect("/wx/login");
                 return false;
             }
-            String md5Token = Utils.stringMD5(accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN);
+            String md5Token = createToken(accountid);
             if (!token.equals(md5Token)) {
                 response.sendRedirect("/wx/login");
                 return false;
             }
-            AccountInfo info = accountInfoRepository.findByAccountid(accountid);
-            AccountSetting setting = accountSettingRepository.findByAccountid(accountid);
-            basicInfo = new AccountBasicInfo();
-            basicInfo.setAccountInfo(info);
-            basicInfo.setAccountSetting(setting);
-
-            session.setAttribute(SessionKey.ACCOUNT_BASIC_INFO, basicInfo);
+            try {
+                AccountInfo info = accountInfoRepository.findByAccountid(accountid);
+                if (info == null) {
+                    LOG.error("accountid in cookie is invalid, accountid: " + accountid + ", token: " + token);
+                    response.sendRedirect("/wx/failed");
+                    return false;
+                }
+                AccountSetting setting = accountSettingRepository.findByAccountid(accountid);
+                addBasicInfoToSession(info, setting, session);
+            } catch (Exception e) {
+                LOG.error("query account in db failed", e);
+                response.sendRedirect("/wx/failed");
+            }
             return true;
         }
     }
@@ -117,20 +138,36 @@ public class LoginInterceptor implements HandlerInterceptor, Ordered {
 
     @Override
     public int getOrder() {
-        return HIGHEST_PRECEDENCE;
+        return HIGHEST_PRECEDENCE + 10;
     }
 
     private boolean shouldPreHandle(String path) {
         if (StringUtils.isEmpty(path)) {
             return false;
         }
-        if (path.startsWith("/order")) {
-            return true;
-        }
-        if (path.startsWith("/account") && !path.equals("/account/basic")) {
+        if (path.startsWith("/order") 
+                || (path.startsWith("/account") && !path.equals("/account/basic"))) {
             return true;
         }
         return false;
     }
 
+    private String getAccessTokenKey(Long accountid) {
+        return CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid;
+    }
+
+    private String createToken(Long accountid) {
+        return Utils.stringMD5(accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN);
+    }
+
+    private void addBasicInfoToSession(AccountInfo info, AccountSetting setting, HttpSession session) {
+        AccountBasicInfo basicInfo = new AccountBasicInfo();
+        try {
+            basicInfo.setAccountInfo(info);
+            basicInfo.setAccountSetting(setting);
+        } catch (Exception e) {
+
+        }
+        session.setAttribute(SessionKey.ACCOUNT_BASIC_INFO, basicInfo);
+    }
 }

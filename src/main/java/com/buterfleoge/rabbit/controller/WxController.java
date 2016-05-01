@@ -7,9 +7,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -19,8 +23,10 @@ import com.buterfleoge.whale.Constants.DefaultValue;
 import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.biz.account.WxBiz;
+import com.buterfleoge.whale.dao.AccountContactsRepository;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.dao.AccountSettingRepository;
+import com.buterfleoge.whale.type.AccountBasicInfo;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.entity.AccountSetting;
 import com.buterfleoge.whale.type.enums.Gender;
@@ -32,10 +38,13 @@ import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
  * @author xiezhenzong
  *
  */
+@Controller
 @RequestMapping("/wx")
-public class WxController {
+public class WxController implements InitializingBean {
 
-    @Value("${{wx.login.callback}}")
+    private static final Logger LOG = LoggerFactory.getLogger(WxController.class);
+
+    @Value("${wx.login.callback}")
     private String wxLoginCallback;
 
     @Autowired
@@ -46,6 +55,9 @@ public class WxController {
 
     @Autowired
     private AccountInfoRepository accountInfoRepository;
+
+    @Autowired
+    private AccountContactsRepository accountContactsRepository;
 
     @Autowired
     private RedisTemplate<String, Object> cacheTemplate;
@@ -61,54 +73,60 @@ public class WxController {
 
     @RequestMapping(value = "/callback")
     public void wxCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String sessionState = getState(request);
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            response.sendRedirect("/wx/failed");
+            return;
+        }
+        String sessionState = getState(session);
         String code = request.getParameter("code");
         String wxState = request.getParameter("state");
         if (StringUtils.isEmpty(code) || sessionState == null || !sessionState.equals(wxState)) {
-
+            response.sendRedirect("/wx/failed");
+            return;
         }
-
-        WxAccessTokenResponse accessToken = wxBiz.getAccessToken(code);
-
-        WxUserinfoResponse userinfoResponse = wxBiz.getUserinfo(accessToken.getAccess_token(), accessToken.getOpenid());
-
-        String wxid = userinfoResponse.getUnionid();
-
+        WxAccessTokenResponse accessToken = null;
+        WxUserinfoResponse userinfoResponse = null;
+        try {
+            accessToken = wxBiz.getAccessToken(code);
+            userinfoResponse = wxBiz.getUserinfo(accessToken.getAccess_token(), accessToken.getOpenid());
+        } catch (Exception e) {
+            LOG.error("call wx failed", e);
+            response.sendRedirect("/wx/failed");
+            return;
+        }
         AccountInfo info = null;
-        AccountSetting setting = accountSettingRepository.findByWxid(wxid);
-
-        if (setting == null) { // 创建账户
-            info = new AccountInfo();
-            info.setAddTime(System.currentTimeMillis());
-
-            info = accountInfoRepository.save(info);
-
-            setting = new AccountSetting();
-            setting.setAccountid(info.getAccountid());
-            setting.setWxid(userinfoResponse.getUnionid());
-            setting.setAvatarUrl(userinfoResponse.getHeadimgurl());
-            setting.setGender(Gender.FEMALE);
-            setting.setNickname(userinfoResponse.getNickname());
-            setting.setWxname(userinfoResponse.getNickname());
-
-            setting = accountSettingRepository.save(setting);
-        } else {
-            info = accountInfoRepository.findByAccountid(setting.getAccountid());
+        AccountSetting setting = null;
+        try {
+            setting = accountSettingRepository.findByWxid(userinfoResponse.getUnionid());
+            if (setting != null) {
+                info = accountInfoRepository.findByAccountid(setting.getAccountid());
+                addBasicInfoToSession(info, setting, session);
+                addCookie(String.valueOf(info.getAccountid()), response);
+                addAccessTokenToCache(info.getAccountid(), accessToken);
+                response.sendRedirect("/account/" + info.getAccountid());
+                return;
+            }
+        } catch (Exception e) {
+            LOG.error("find account in db failed", e);
+            response.sendRedirect("/wx/failed");
+            return;
         }
 
-        cacheTemplate.opsForValue()
-                .set(CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + setting.getAccountid(), accessToken);
-
-        Cookie cookie = new Cookie(CookieKey.ACCOUNTID, String.valueOf(setting.getAccountid()));
-
-        response.addCookie(cookie);
-
-        cookie = new Cookie(CookieKey.TOKEN, String.valueOf(DefaultValue.TOKEN + setting.getAccountid()));
-
-        response.addCookie(cookie);
-
-        response.sendRedirect("/account/" + setting.getAccountid());
-
+        info = createAccountInfo();
+        try {
+            info = accountInfoRepository.save(info);
+            setting = createAccountSetting(userinfoResponse, info);
+            setting = accountSettingRepository.save(setting);
+        } catch (Exception e) {
+            LOG.error("create account failed", e);
+            response.sendRedirect("/wx/failed");
+            return;
+        }
+        addBasicInfoToSession(info, setting, session);
+        addCookie(String.valueOf(info.getAccountid()), response);
+        addAccessTokenToCache(info.getAccountid(), accessToken);
+        response.sendRedirect("/account/" + info.getAccountid());
     }
 
     private static String createState() {
@@ -119,22 +137,80 @@ public class WxController {
         return stringMd5;
     }
 
-    public static void main(String[] args) {
-        System.out.println(createState());
-    }
-
     private String createRedirectUri() throws Exception {
         StringBuilder sb = new StringBuilder(wxLoginCallback).append("/wx/callback");
         return URLEncoder.encode(sb.toString(), "UTF-8");
     }
 
-    private String getState(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            return null;
-        }
+    private String getState(HttpSession session) {
         String state = (String) session.getAttribute(SessionKey.WX_LOGIN_STATE);
         return StringUtils.hasText(state) ? state : null;
     }
 
+    private void addBasicInfoToSession(AccountInfo info, AccountSetting setting, HttpSession session) {
+        AccountBasicInfo basicInfo = new AccountBasicInfo();
+        try {
+            basicInfo.setAccountInfo(info);
+            basicInfo.setAccountSetting(setting);
+        } catch (Exception e) {
+
+        }
+        session.setAttribute(SessionKey.ACCOUNT_BASIC_INFO, basicInfo);
+    }
+
+    private void addCookie(String accountid, HttpServletResponse response) {
+        response.addCookie(createCookie(CookieKey.ACCOUNTID, accountid));
+        response.addCookie(createCookie(CookieKey.TOKEN, createToken(accountid)));
+    }
+
+    private Cookie createCookie(String name, String value) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setPath("/");
+        cookie.setMaxAge(DefaultValue.COOKIE_EXPIRY);
+        return cookie;
+    }
+
+    private String createToken(String accountid) {
+        return Utils.stringMD5(accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN);
+    }
+
+    private void addAccessTokenToCache(Long accountid, WxAccessTokenResponse accessToken) {
+        String cacheKey = CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid;
+        cacheTemplate.opsForValue().set(cacheKey, accessToken);
+    }
+
+    protected AccountInfo createAccountInfo() {
+        AccountInfo info = new AccountInfo();
+        info.setAddTime(System.currentTimeMillis());
+        info.setModTime(info.getAddTime());
+        return info;
+    }
+
+    protected AccountSetting createAccountSetting(WxUserinfoResponse userinfoResponse, AccountInfo info) {
+        AccountSetting setting = new AccountSetting();
+        setting.setAccountid(info.getAccountid());
+        setting.setNickname(userinfoResponse.getNickname());
+        setting.setWxname(userinfoResponse.getNickname());
+        setting.setWxid(userinfoResponse.getUnionid());
+        setting.setAvatarUrl(userinfoResponse.getHeadimgurl());
+        setting.setGender(getGender(userinfoResponse.getSex()));
+        setting.setModTime(info.getAddTime());
+        return setting;
+    }
+
+    private Gender getGender(int sex) {
+         if (sex == WxUserinfoResponse.SEX_MALE) {
+            return Gender.MALE;
+        } else if (sex == WxUserinfoResponse.SEX_FEMALE) {
+            return Gender.FEMALE;
+        } else {
+            return Gender.UNKNOW;
+        }
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        cacheTemplate.opsForValue().set("dkdkdk", new WxAccessTokenResponse());
+
+    }
 }

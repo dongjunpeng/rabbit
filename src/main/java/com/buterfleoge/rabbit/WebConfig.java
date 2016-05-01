@@ -12,7 +12,8 @@ import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import com.buterfleoge.rabbit.interceptor.AccountInterceptor;
-import com.buterfleoge.rabbit.interceptor.LoginInterceptor;
+import com.buterfleoge.rabbit.interceptor.LoginStateInterceptor;
+import com.buterfleoge.rabbit.interceptor.WxLoginInterceptor;
 
 /**
  * spring mvc config
@@ -27,6 +28,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     static {
         viewMap.put("/register", "register");
+        viewMap.put("/", "forward:/index.html");
     }
 
     @Override
@@ -36,9 +38,14 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         }
     }
 
-    @Bean(name = "loginInterceptor")
-    public HandlerInterceptor getLoginInterceptor() {
-        return new LoginInterceptor();
+    @Bean(name = "wxLoginInterceptor")
+    public HandlerInterceptor getWxLoginInterceptor() {
+        return new WxLoginInterceptor();
+    }
+
+    @Bean(name = "loginStateInterceptor")
+    public HandlerInterceptor getLoginStateInterceptor() {
+        return new LoginStateInterceptor();
     }
 
     @Bean(name = "accountInterceptor")
@@ -48,7 +55,8 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(getLoginInterceptor());
+        registry.addInterceptor(getWxLoginInterceptor());
+        registry.addInterceptor(getLoginStateInterceptor());
         registry.addInterceptor(getAccountInterceptor());
     }
 
