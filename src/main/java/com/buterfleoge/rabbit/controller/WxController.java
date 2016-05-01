@@ -35,9 +35,6 @@ import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
 @RequestMapping("/wx")
 public class WxController {
 
-    @Value("${wx.token}")
-    private String wxToken;
-
     @Value("${{wx.login.callback}}")
     private String wxLoginCallback;
 
@@ -114,12 +111,16 @@ public class WxController {
 
     }
 
-    private String createState() {
-        StringBuilder sb = new StringBuilder(wxToken) //
+    private static String createState() {
+        StringBuilder sb = new StringBuilder(DefaultValue.TOKEN) //
                 .append(DefaultValue.SEPARATOR).append(System.currentTimeMillis()) //
                 .append(DefaultValue.SEPARATOR).append(Math.random());
         String stringMd5 = Utils.stringMD5(sb.toString());
         return stringMd5;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(createState());
     }
 
     private String createRedirectUri() throws Exception {
