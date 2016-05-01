@@ -26,7 +26,7 @@ public class OrderController {
     private OrderBiz orderBiz;
 
     @ResponseBody
-    @RequestMapping(value = "/current", method = RequestMethod.GET)
+    @RequestMapping(value = "/orders", method = RequestMethod.GET)
     public GetOrdersResponse getRoute(GetOrdersRequest request) throws Exception {
         GetOrdersResponse response = new GetOrdersResponse();
         orderBiz.getOrder(request, response);
