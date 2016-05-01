@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.buterfleoge.rabbit.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +26,7 @@ public class OrderController {
     private OrderBiz orderBiz;
 
     @ResponseBody
-    @RequestMapping(value = "/route", method = RequestMethod.GET)
+    @RequestMapping(value = "/current", method = RequestMethod.GET)
     public GetCurrentOrderResponse getRoute(GetCurrentOrderRequest request) throws Exception {
         GetCurrentOrderResponse response = new GetCurrentOrderResponse();
         orderBiz.getCurrentOrder(request, response);
