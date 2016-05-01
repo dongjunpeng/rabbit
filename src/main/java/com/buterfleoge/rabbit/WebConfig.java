@@ -15,6 +15,7 @@ import com.buterfleoge.rabbit.interceptor.AccountInterceptor;
 import com.buterfleoge.rabbit.interceptor.LoginStateInterceptor;
 import com.buterfleoge.rabbit.interceptor.WxLoginInterceptor;
 
+
 /**
  * spring mvc config
  *
