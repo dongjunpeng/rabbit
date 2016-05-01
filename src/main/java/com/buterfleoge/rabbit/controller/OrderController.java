@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buterfleoge.whale.biz.order.OrderBiz;
-import com.buterfleoge.whale.type.protocol.order.GetCurrentOrderRequest;
-import com.buterfleoge.whale.type.protocol.order.GetCurrentOrderResponse;
+import com.buterfleoge.whale.type.protocol.order.GetOrdersRequest;
+import com.buterfleoge.whale.type.protocol.order.GetOrdersResponse;
 
 /**
  * 
@@ -27,9 +27,9 @@ public class OrderController {
 
     @ResponseBody
     @RequestMapping(value = "/current", method = RequestMethod.GET)
-    public GetCurrentOrderResponse getRoute(GetCurrentOrderRequest request) throws Exception {
-        GetCurrentOrderResponse response = new GetCurrentOrderResponse();
-        orderBiz.getCurrentOrder(request, response);
+    public GetOrdersResponse getRoute(GetOrdersRequest request) throws Exception {
+        GetOrdersResponse response = new GetOrdersResponse();
+        orderBiz.getOrder(request, response);
         return response;
     }
 

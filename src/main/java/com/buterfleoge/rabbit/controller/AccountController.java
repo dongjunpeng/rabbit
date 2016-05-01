@@ -22,8 +22,6 @@ import com.buterfleoge.whale.type.protocol.account.GetBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.GetBasicInfoResponse;
 import com.buterfleoge.whale.type.protocol.account.GetContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.GetContactsResponse;
-import com.buterfleoge.whale.type.protocol.account.GetOrdersRequest;
-import com.buterfleoge.whale.type.protocol.account.GetOrdersResponse;
 import com.buterfleoge.whale.type.protocol.account.LoginRequest;
 import com.buterfleoge.whale.type.protocol.account.PostBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
@@ -32,6 +30,8 @@ import com.buterfleoge.whale.type.protocol.account.PutContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterResponse;
 import com.buterfleoge.whale.type.protocol.account.ValidateEmailRequest;
+import com.buterfleoge.whale.type.protocol.order.GetOrdersRequest;
+import com.buterfleoge.whale.type.protocol.order.GetOrdersResponse;
 
 /**
  * 账户相关处理
