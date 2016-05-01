@@ -176,4 +176,9 @@ public class AccountController {
         return null;
     }
 
+    @RequestMapping(value = "/**", method = RequestMethod.GET)
+    public String getOrderPage() {
+        return "order";
+    }
+
 }

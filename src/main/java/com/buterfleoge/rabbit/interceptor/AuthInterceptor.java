@@ -22,7 +22,7 @@ public abstract class AuthInterceptor implements HandlerInterceptor, Ordered {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-        String path = request.getPathInfo();
+        String path = request.getRequestURI();
         System.out.println(path);
         if (StringUtils.isEmpty(path)) {
             return false;
