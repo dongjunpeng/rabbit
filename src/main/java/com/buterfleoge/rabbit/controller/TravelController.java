@@ -45,7 +45,7 @@ public class TravelController {
         travelBiz.getGroup(request, response);
         return response;
     }
-    
+
     @RequestMapping(value = "/*", method = RequestMethod.GET)
     public String getTravelPage() {
         return "travel";

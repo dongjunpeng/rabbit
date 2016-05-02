@@ -13,7 +13,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -26,10 +25,10 @@ import com.buterfleoge.whale.biz.account.WxBiz;
 import com.buterfleoge.whale.dao.AccountContactsRepository;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.dao.AccountSettingRepository;
-import com.buterfleoge.whale.type.AccountBasicInfo;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.entity.AccountSetting;
 import com.buterfleoge.whale.type.enums.Gender;
+import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
 
@@ -38,7 +37,7 @@ import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
  * @author xiezhenzong
  *
  */
-@Controller
+// @Controller
 @RequestMapping("/wx")
 public class WxController implements InitializingBean {
 
@@ -199,7 +198,7 @@ public class WxController implements InitializingBean {
     }
 
     private Gender getGender(int sex) {
-         if (sex == WxUserinfoResponse.SEX_MALE) {
+        if (sex == WxUserinfoResponse.SEX_MALE) {
             return Gender.MALE;
         } else if (sex == WxUserinfoResponse.SEX_FEMALE) {
             return Gender.FEMALE;
