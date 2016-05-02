@@ -10,7 +10,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.buterfleoge.whale.Constants.SessionKey;
-import com.buterfleoge.whale.type.AccountBasicInfo;
+import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 
 /**
  *

@@ -24,9 +24,9 @@ import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.biz.account.WxBiz;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.dao.AccountSettingRepository;
-import com.buterfleoge.whale.type.AccountBasicInfo;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.entity.AccountSetting;
+import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 
 /**
