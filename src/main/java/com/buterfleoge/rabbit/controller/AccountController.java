@@ -78,17 +78,6 @@ public class AccountController {
         return response;
     }
 
-    // 测试用
-    @ResponseBody
-    @RequestMapping(value = "/basicinfo", method = RequestMethod.POST)
-    public Response putBasicInfo() throws Exception {
-        Response response = new Response();
-
-        accountBiz.createBasicInfo();
-        response.setStatus(0);
-        return response;
-    }
-
     @ResponseBody
     @RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
     public GetBasicInfoResponse getBasicInfo(GetBasicInfoRequest request) throws Exception {
@@ -98,7 +87,7 @@ public class AccountController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/basicinfo", method = RequestMethod.PUT)
+    @RequestMapping(value = "/basicinfo", method = RequestMethod.POST)
     public Response updateBasicInfo(PostBasicInfoRequest request) throws Exception {
 
         Response response = new Response();
