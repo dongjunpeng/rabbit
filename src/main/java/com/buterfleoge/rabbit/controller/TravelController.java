@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.buterfleoge.whale.biz.travel.TravelBiz;
 import com.buterfleoge.whale.type.protocol.travel.GetGroupRequest;
 import com.buterfleoge.whale.type.protocol.travel.GetGroupResponse;
+import com.buterfleoge.whale.type.protocol.travel.GetQuotaRequest;
+import com.buterfleoge.whale.type.protocol.travel.GetQuotaResponse;
 import com.buterfleoge.whale.type.protocol.travel.GetRouteRequest;
 import com.buterfleoge.whale.type.protocol.travel.GetRouteResponse;
 
@@ -43,6 +45,14 @@ public class TravelController {
     public GetGroupResponse getGroup(GetGroupRequest request) throws Exception {
         GetGroupResponse response = new GetGroupResponse();
         travelBiz.getGroup(request, response);
+        return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/quota", method = RequestMethod.GET)
+    public GetQuotaResponse getQuota(GetQuotaRequest request) throws Exception {
+        GetQuotaResponse response = new GetQuotaResponse();
+        travelBiz.getQuota(request, response);
         return response;
     }
 
