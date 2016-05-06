@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buterfleoge.whale.biz.order.OrderBiz;
+import com.buterfleoge.whale.type.protocol.Response;
+import com.buterfleoge.whale.type.protocol.order.CancelOrderRequest;
+import com.buterfleoge.whale.type.protocol.order.CreateOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefResponse;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
@@ -36,6 +39,34 @@ public class OrderController {
     public GetOrdersResponse getOrders(GetOrdersRequest request) throws Exception {
         GetOrdersResponse response = new GetOrdersResponse();
         orderBiz.getOrders(request, response);
+        return response;
+    }
+
+    // @ResponseBody
+    // @RequestMapping(value = "/order", method = RequestMethod.POST)
+    // public Response createOrder(HttpServletRequest request) throws Exception
+    // {
+    // String a = request.getContentType();
+    // Map<String, String[]> b = request.getParameterMap();
+    // String c = request.getRequestURL().toString();
+    // Response response = new Response();
+    // // orderBiz.createOrder(request, response);
+    // return response;
+    // }
+
+    @ResponseBody
+    @RequestMapping(value = "/order", method = RequestMethod.POST)
+    public Response createOrder(CreateOrderRequest request) throws Exception {
+        Response response = new Response();
+        orderBiz.createOrder(request, response);
+        return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/order", method = RequestMethod.DELETE)
+    public Response cancelOrder(CancelOrderRequest request) throws Exception {
+        Response response = new Response();
+        orderBiz.cancelOrder(request, response);
         return response;
     }
 
