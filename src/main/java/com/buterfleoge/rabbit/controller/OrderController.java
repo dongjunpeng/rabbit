@@ -2,10 +2,12 @@ package com.buterfleoge.rabbit.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.buterfleoge.whale.biz.order.CodeGenerator;
 import com.buterfleoge.whale.biz.order.OrderBiz;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.order.CancelOrderRequest;
@@ -16,6 +18,7 @@ import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersRequest;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersResponse;
+import com.buterfleoge.whale.type.protocol.order.TestRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
 
@@ -34,6 +37,9 @@ public class OrderController {
     @Autowired
     private OrderBiz orderBiz;
 
+    @Autowired
+    private CodeGenerator codeGenerator;
+
     @ResponseBody
     @RequestMapping(value = "/orders", method = RequestMethod.GET)
     public GetOrdersResponse getOrders(GetOrdersRequest request) throws Exception {
@@ -42,21 +48,9 @@ public class OrderController {
         return response;
     }
 
-    // @ResponseBody
-    // @RequestMapping(value = "/order", method = RequestMethod.POST)
-    // public Response createOrder(HttpServletRequest request) throws Exception
-    // {
-    // String a = request.getContentType();
-    // Map<String, String[]> b = request.getParameterMap();
-    // String c = request.getRequestURL().toString();
-    // Response response = new Response();
-    // // orderBiz.createOrder(request, response);
-    // return response;
-    // }
-
     @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.POST)
-    public Response createOrder(CreateOrderRequest request) throws Exception {
+    public Response createOrder(@ModelAttribute("request") CreateOrderRequest request) throws Exception {
         Response response = new Response();
         orderBiz.createOrder(request, response);
         return response;
@@ -92,6 +86,20 @@ public class OrderController {
         ValidateCodeResponse response = new ValidateCodeResponse();
         orderBiz.validateDiscountCode(request, response);
         return response;
+    }
+
+    // 下面都是测试用的
+    @ResponseBody
+    @RequestMapping(value = "/test/code", method = RequestMethod.POST)
+    public Response validateDiscountCode(TestRequest request) throws Exception {
+        Response response = new Response();
+        codeGenerator.generate(request.getCount(), request.getValue(), request.getStartTime(), request.getEndTime());
+        return response;
+    }
+
+    @RequestMapping(value = "/**", method = RequestMethod.GET)
+    public String getOrderPage() throws Exception {
+        return "order";
     }
 
 }

@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buterfleoge.whale.Constants.SessionKey;
+import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.account.AccountBiz;
 import com.buterfleoge.whale.dao.AccountSettingRepository;
+import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.entity.AccountSetting;
 import com.buterfleoge.whale.type.enums.AccountType;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.account.DeleteContactsRequest;
@@ -30,6 +33,7 @@ import com.buterfleoge.whale.type.protocol.account.PutContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterRequest;
 import com.buterfleoge.whale.type.protocol.account.RegisterResponse;
 import com.buterfleoge.whale.type.protocol.account.ValidateEmailRequest;
+import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersRequest;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersResponse;
 
@@ -91,9 +95,24 @@ public class AccountController {
 
     @ResponseBody
     @RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
-    public GetBasicInfoResponse getBasicInfo(GetBasicInfoRequest request) throws Exception {
+    public GetBasicInfoResponse getBasicInfo(GetBasicInfoRequest request, HttpServletRequest httpServletRequest)
+            throws Exception {
         GetBasicInfoResponse response = new GetBasicInfoResponse();
-        accountBiz.getBasicInfo(request, response);
+        response.setStatus(Status.OK);
+        HttpSession session = httpServletRequest.getSession(false);
+        if (session == null) {
+            response.setAccountInfo(new AccountInfo());
+            response.getAccountInfo().setName("dongjunpeng");
+            response.getAccountInfo().setAccountid(1L);
+            response.setAccountSetting(new AccountSetting());
+            return response;
+        }
+        AccountBasicInfo basicInfo = (AccountBasicInfo) session.getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
+        if (basicInfo == null) {
+            return response;
+        }
+        response.setAccountInfo(basicInfo.getAccountInfo());
+        response.setAccountSetting(basicInfo.getAccountSetting());
         return response;
     }
 
@@ -178,7 +197,7 @@ public class AccountController {
 
     @RequestMapping(value = "/**", method = RequestMethod.GET)
     public String getOrderPage() {
-        return "order";
+        return "account";
     }
 
 }
