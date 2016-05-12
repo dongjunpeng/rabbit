@@ -64,7 +64,7 @@ public class AccountController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/basicinfo", method = RequestMethod.POST)
+    @RequestMapping(value = "/basicinfo", method = RequestMethod.PUT)
     public Response updateBasicInfo(PostBasicInfoRequest request) throws Exception {
         Response response = new Response();
         accountBiz.updateBasicInfo(request, response);
