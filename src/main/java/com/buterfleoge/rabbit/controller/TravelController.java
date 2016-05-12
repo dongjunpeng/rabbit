@@ -44,7 +44,7 @@ public class TravelController {
     @RequestMapping(value = "/group", method = RequestMethod.GET)
     public GetGroupResponse getGroup(GetGroupRequest request) throws Exception {
         GetGroupResponse response = new GetGroupResponse();
-        travelBiz.getGroup(request, response);
+        travelBiz.getGroups(request, response);
         return response;
     }
 

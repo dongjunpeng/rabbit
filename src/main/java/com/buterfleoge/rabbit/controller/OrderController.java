@@ -18,6 +18,8 @@ import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersRequest;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersResponse;
+import com.buterfleoge.whale.type.protocol.order.RefoundRequest;
+import com.buterfleoge.whale.type.protocol.order.RefoundResponse;
 import com.buterfleoge.whale.type.protocol.order.TestRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
@@ -88,6 +90,19 @@ public class OrderController {
         return response;
     }
 
+    @ResponseBody
+    @RequestMapping(value = "/refound", method = RequestMethod.GET)
+    public RefoundResponse getRefoundInfo(RefoundRequest request) throws Exception {
+        RefoundResponse response = new RefoundResponse();
+        orderBiz.getRefoundInfo(request, response);
+        return response;
+    }
+
+    @RequestMapping(value = "/**", method = RequestMethod.GET)
+    public String getOrderPage() throws Exception {
+        return "order";
+    }
+
     // 下面都是测试用的
     @ResponseBody
     @RequestMapping(value = "/test/code", method = RequestMethod.POST)
@@ -95,11 +110,6 @@ public class OrderController {
         Response response = new Response();
         codeGenerator.generate(request.getCount(), request.getValue(), request.getStartTime(), request.getEndTime());
         return response;
-    }
-
-    @RequestMapping(value = "/**", method = RequestMethod.GET)
-    public String getOrderPage() throws Exception {
-        return "order";
     }
 
 }
