@@ -22,12 +22,13 @@ import com.buterfleoge.whale.Constants.DefaultValue;
 import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.biz.account.WxBiz;
-import com.buterfleoge.whale.dao.AccountContactsRepository;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.dao.AccountSettingRepository;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.entity.AccountSetting;
+import com.buterfleoge.whale.type.enums.AccountStatus;
 import com.buterfleoge.whale.type.enums.Gender;
+import com.buterfleoge.whale.type.enums.IdType;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
@@ -54,9 +55,6 @@ public class WxController implements InitializingBean {
 
     @Autowired
     private AccountInfoRepository accountInfoRepository;
-
-    @Autowired
-    private AccountContactsRepository accountContactsRepository;
 
     @Autowired
     private RedisTemplate<String, Object> cacheTemplate;
@@ -148,12 +146,8 @@ public class WxController implements InitializingBean {
 
     private void addBasicInfoToSession(AccountInfo info, AccountSetting setting, HttpSession session) {
         AccountBasicInfo basicInfo = new AccountBasicInfo();
-        try {
-            basicInfo.setAccountInfo(info);
-            basicInfo.setAccountSetting(setting);
-        } catch (Exception e) {
-
-        }
+        basicInfo.setAccountInfo(info);
+        basicInfo.setAccountSetting(setting);
         session.setAttribute(SessionKey.ACCOUNT_BASIC_INFO, basicInfo);
     }
 
@@ -180,6 +174,8 @@ public class WxController implements InitializingBean {
 
     protected AccountInfo createAccountInfo() {
         AccountInfo info = new AccountInfo();
+        info.setStatus(AccountStatus.WAIT_COMPLETE_INFO);
+        info.setIdType(IdType.IDENTIFICATION);
         info.setAddTime(System.currentTimeMillis());
         info.setModTime(info.getAddTime());
         return info;
@@ -189,6 +185,7 @@ public class WxController implements InitializingBean {
         AccountSetting setting = new AccountSetting();
         setting.setAccountid(info.getAccountid());
         setting.setNickname(userinfoResponse.getNickname());
+        setting.setBirthday("1990-01-01");
         setting.setWxname(userinfoResponse.getNickname());
         setting.setWxid(userinfoResponse.getUnionid());
         setting.setAvatarUrl(userinfoResponse.getHeadimgurl());
