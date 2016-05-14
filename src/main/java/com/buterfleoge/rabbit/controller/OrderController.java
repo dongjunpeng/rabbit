@@ -12,15 +12,17 @@ import com.buterfleoge.whale.biz.order.OrderBiz;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.order.CancelOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.CreateOrderRequest;
+import com.buterfleoge.whale.type.protocol.order.GenerateCodeRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefResponse;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
+import com.buterfleoge.whale.type.protocol.order.GetOrderDetailRequest;
+import com.buterfleoge.whale.type.protocol.order.GetOrderDetailResponse;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersRequest;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersResponse;
 import com.buterfleoge.whale.type.protocol.order.RefoundRequest;
 import com.buterfleoge.whale.type.protocol.order.RefoundResponse;
-import com.buterfleoge.whale.type.protocol.order.TestRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
 
@@ -43,10 +45,10 @@ public class OrderController {
     private CodeGenerator codeGenerator;
 
     @ResponseBody
-    @RequestMapping(value = "/orders", method = RequestMethod.GET)
-    public GetOrdersResponse getOrders(GetOrdersRequest request) throws Exception {
-        GetOrdersResponse response = new GetOrdersResponse();
-        orderBiz.getOrders(request, response);
+    @RequestMapping(value = "/detail", method = RequestMethod.GET)
+    public GetOrderDetailResponse getOrderDetail(GetOrderDetailRequest request) throws Exception {
+        GetOrderDetailResponse response = new GetOrderDetailResponse();
+        orderBiz.getOrderDetail(request, response);
         return response;
     }
 
@@ -71,6 +73,14 @@ public class OrderController {
     public GetBriefResponse getRoute(GetBriefRequest request) throws Exception {
         GetBriefResponse response = new GetBriefResponse();
         orderBiz.getBriefOrders(request, response);
+        return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/orders", method = RequestMethod.GET)
+    public GetOrdersResponse getOrders(GetOrdersRequest request) throws Exception {
+        GetOrdersResponse response = new GetOrdersResponse();
+        orderBiz.getOrders(request, response);
         return response;
     }
 
@@ -105,8 +115,8 @@ public class OrderController {
 
     // 下面都是测试用的
     @ResponseBody
-    @RequestMapping(value = "/test/code", method = RequestMethod.POST)
-    public Response validateDiscountCode(TestRequest request) throws Exception {
+    @RequestMapping(value = "/generate/code", method = RequestMethod.POST)
+    public Response generateCode(GenerateCodeRequest request) throws Exception {
         Response response = new Response();
         codeGenerator.generate(request.getCount(), request.getValue(), request.getStartTime(), request.getEndTime());
         return response;
