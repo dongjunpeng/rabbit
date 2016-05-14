@@ -50,8 +50,8 @@ public class AccountController {
         GetBasicInfoResponse response = new GetBasicInfoResponse();
         HttpSession session = httpServletRequest.getSession(false);
         if (session == null) {
-            response.setAccountInfo(accountInfoRepository.findOne(2L));
-            response.setAccountSetting(accountSettingRepository.findOne(2L));
+            response.setAccountInfo(accountInfoRepository.findOne(10001L));
+            response.setAccountSetting(accountSettingRepository.findOne(10001L));
             return response;
         }
         AccountBasicInfo basicInfo = (AccountBasicInfo) session.getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
