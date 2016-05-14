@@ -16,6 +16,8 @@ import com.buterfleoge.whale.type.protocol.order.GetBriefRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefResponse;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
+import com.buterfleoge.whale.type.protocol.order.GetOrderDetailRequest;
+import com.buterfleoge.whale.type.protocol.order.GetOrderDetailResponse;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersRequest;
 import com.buterfleoge.whale.type.protocol.order.GetOrdersResponse;
 import com.buterfleoge.whale.type.protocol.order.RefoundRequest;
@@ -41,6 +43,14 @@ public class OrderController {
 
     @Autowired
     private CodeGenerator codeGenerator;
+
+    @ResponseBody
+    @RequestMapping(value = "/order", method = RequestMethod.GET)
+    public GetOrderDetailResponse getOrderDetail(GetOrderDetailRequest request) throws Exception {
+        GetOrderDetailResponse response = new GetOrderDetailResponse();
+        orderBiz.getOrderDetail(request, response);
+        return response;
+    }
 
     @ResponseBody
     @RequestMapping(value = "/orders", method = RequestMethod.GET)
