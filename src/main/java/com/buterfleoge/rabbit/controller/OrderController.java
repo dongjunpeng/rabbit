@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.buterfleoge.whale.biz.order.CodeGenerator;
 import com.buterfleoge.whale.biz.order.OrderBiz;
 import com.buterfleoge.whale.type.protocol.Response;
+import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 import com.buterfleoge.whale.type.protocol.order.CancelOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.CreateOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.GenerateCodeRequest;
@@ -19,8 +20,8 @@ import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
 import com.buterfleoge.whale.type.protocol.order.GetOrderDetailRequest;
 import com.buterfleoge.whale.type.protocol.order.GetOrderDetailResponse;
-import com.buterfleoge.whale.type.protocol.order.GetOrdersRequest;
-import com.buterfleoge.whale.type.protocol.order.GetOrdersResponse;
+import com.buterfleoge.whale.type.protocol.order.NewOrderRequest;
+import com.buterfleoge.whale.type.protocol.order.NewOrderResponse;
 import com.buterfleoge.whale.type.protocol.order.RefoundRequest;
 import com.buterfleoge.whale.type.protocol.order.RefoundResponse;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
@@ -36,7 +37,7 @@ import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
 
 @Controller
 @RequestMapping("/order")
-public class OrderController {
+public class OrderController extends RabbitController {
 
     @Autowired
     private OrderBiz orderBiz;
@@ -45,6 +46,15 @@ public class OrderController {
     private CodeGenerator codeGenerator;
 
     @ResponseBody
+    @RequestMapping(value = "/new", method = RequestMethod.POST)
+    public NewOrderResponse newOrder(NewOrderRequest request) throws Exception {
+        AccountBasicInfo accountBasicInfo = getAccountBasicInfo();
+        Long accountid = accountBasicInfo.getAccountInfo().getAccountid();
+        NewOrderResponse response = new NewOrderResponse();
+        orderBiz.newOrder(accountid, request, response);
+        return response;
+    }
+
     @RequestMapping(value = "/detail", method = RequestMethod.GET)
     public GetOrderDetailResponse getOrderDetail(GetOrderDetailRequest request) throws Exception {
         GetOrderDetailResponse response = new GetOrderDetailResponse();
@@ -73,14 +83,6 @@ public class OrderController {
     public GetBriefResponse getRoute(GetBriefRequest request) throws Exception {
         GetBriefResponse response = new GetBriefResponse();
         orderBiz.getBriefOrders(request, response);
-        return response;
-    }
-
-    @ResponseBody
-    @RequestMapping(value = "/orders", method = RequestMethod.GET)
-    public GetOrdersResponse getOrders(GetOrdersRequest request) throws Exception {
-        GetOrdersResponse response = new GetOrdersResponse();
-        orderBiz.getOrders(request, response);
         return response;
     }
 
