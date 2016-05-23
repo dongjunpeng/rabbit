@@ -49,7 +49,8 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/new", method = RequestMethod.POST)
     public NewOrderResponse newOrder(NewOrderRequest request) throws Exception {
         AccountBasicInfo accountBasicInfo = getAccountBasicInfo();
-        Long accountid = accountBasicInfo.getAccountInfo().getAccountid();
+        // Long accountid = accountBasicInfo.getAccountInfo().getAccountid();
+        Long accountid = request.getAccountid();
         NewOrderResponse response = new NewOrderResponse();
         orderBiz.newOrder(accountid, request, response);
         return response;
