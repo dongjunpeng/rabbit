@@ -1,6 +1,7 @@
 package com.buterfleoge.rabbit.controller;
 
 import java.net.URLEncoder;
+import java.util.Date;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -38,7 +40,7 @@ import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
  * @author xiezhenzong
  *
  */
-// @Controller
+@Controller
 @RequestMapping("/wx")
 public class WxController implements InitializingBean {
 
@@ -176,7 +178,7 @@ public class WxController implements InitializingBean {
         AccountInfo info = new AccountInfo();
         info.setStatus(AccountStatus.WAIT_COMPLETE_INFO);
         info.setIdType(IdType.IDENTIFICATION);
-        info.setAddTime(System.currentTimeMillis());
+        info.setAddTime(new Date());
         info.setModTime(info.getAddTime());
         return info;
     }
@@ -185,7 +187,7 @@ public class WxController implements InitializingBean {
         AccountSetting setting = new AccountSetting();
         setting.setAccountid(info.getAccountid());
         setting.setNickname(userinfoResponse.getNickname());
-        setting.setBirthday("1990-01-01");
+        setting.setBirthday(new Date());
         setting.setWxname(userinfoResponse.getNickname());
         setting.setWxid(userinfoResponse.getUnionid());
         setting.setAvatarUrl(userinfoResponse.getHeadimgurl());
