@@ -37,6 +37,7 @@ public class IndexController {
     @ResponseBody
     @RequestMapping(value = "/hot", method = RequestMethod.GET)
     public GetRouteResponse getHotRoute(GetRouteRequest request) throws Exception {
+        request.setRouteids(hotRouteidSet);
         GetRouteResponse response = new GetRouteResponse();
         travelBiz.getRoute(request, response);
         return response;
