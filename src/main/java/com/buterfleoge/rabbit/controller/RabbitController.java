@@ -26,4 +26,17 @@ public abstract class RabbitController {
         return (AccountBasicInfo) httpSession.getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
     }
 
+    protected AccountBasicInfo requireAccountBasicInfo() {
+        AccountBasicInfo accountBasicInfo = getAccountBasicInfo();
+        if (accountBasicInfo == null) {
+            throw new IllegalStateException("No account basic info in session");
+        }
+        return accountBasicInfo;
+    }
+
+    protected Long requireAccountid() {
+        AccountBasicInfo accountBasicInfo = requireAccountBasicInfo();
+        return accountBasicInfo.getAccountInfo().getAccountid();
+    }
+
 }
