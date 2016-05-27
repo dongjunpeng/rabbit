@@ -3,12 +3,15 @@ package com.buterfleoge.rabbit;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 import org.springframework.format.Printer;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.NumberFormat;
 import org.springframework.format.datetime.DateTimeFormatAnnotationFormatterFactory;
 import org.springframework.format.number.NumberFormatAnnotationFormatterFactory;
+import org.springframework.util.CollectionUtils;
 
 import com.buterfleoge.whale.type.formatter.ImagePathAnnotationFormatterFactory;
 import com.buterfleoge.whale.type.formatter.ImagePathFormat;
@@ -50,20 +53,20 @@ public class RabbitJacksonAnnotationIntrospector extends JacksonAnnotationIntros
             return new RabbitSerializer<Date>(printer);
         }
 
-        NumberFormat numberFormat = this._findAnnotation(a, NumberFormat.class);
+        NumberFormat numberFormat = _findAnnotation(a, NumberFormat.class);
         if (numberFormat != null) {
             NumberFormatAnnotationFormatterFactory factory = new NumberFormatAnnotationFormatterFactory();
             Printer<Number> printer = factory.getPrinter(numberFormat, BigDecimal.class);
             return new RabbitSerializer<Number>(printer);
         }
 
-        ImagePathFormat imagePathFormat = this._findAnnotation(a, ImagePathFormat.class);
+        ImagePathFormat imagePathFormat = _findAnnotation(a, ImagePathFormat.class);
         if (imagePathFormat != null) {
             ImagePathAnnotationFormatterFactory factory = new ImagePathAnnotationFormatterFactory(imgHostUrl);
             Printer<String> printer = factory.getPrinter(imagePathFormat, String.class);
-            return new RabbitSerializer<String>(printer);
+            return imagePathFormat.isComposite() ? new RabbitListSerializer<String>(printer)
+                    : new RabbitSerializer<String>(printer);
         }
-
         return super.findSerializer(a);
     }
 
@@ -77,9 +80,37 @@ public class RabbitJacksonAnnotationIntrospector extends JacksonAnnotationIntros
 
         public void serialize(T value, JsonGenerator gen, SerializerProvider provider)
                 throws IOException, JsonProcessingException {
+            if (value == null) {
+                gen.writeNull();
+                return;
+            }
             String valueStr = printer.print(value, provider.getLocale());
             gen.writeString(valueStr);
         }
+    }
+
+    private class RabbitListSerializer<T> extends JsonSerializer<List<T>> {
+
+        private Printer<T> printer;
+
+        private RabbitListSerializer(Printer<T> printer) {
+            this.printer = printer;
+        }
+
+        @Override
+        public void serialize(List<T> value, JsonGenerator gen, SerializerProvider serializers)
+                throws IOException, JsonProcessingException {
+            if (CollectionUtils.isEmpty(value)) {
+                return;
+            }
+            Locale locale = serializers.getLocale();
+            gen.writeStartArray(value.size());
+            for (T t : value) {
+                gen.writeString(printer.print(t, locale));
+            }
+            gen.writeEndArray();
+        }
+
     }
 
 }
