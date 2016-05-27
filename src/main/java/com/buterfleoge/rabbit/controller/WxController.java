@@ -14,7 +14,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -40,8 +39,8 @@ import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
  * @author xiezhenzong
  *
  */
-@Controller
-@RequestMapping("/wx")
+// @Controller
+// @RequestMapping("/wx")
 public class WxController implements InitializingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(WxController.class);
