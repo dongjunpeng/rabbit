@@ -54,7 +54,7 @@ public class AccountController extends RabbitController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/basicinfo", method = RequestMethod.POST)
+    @RequestMapping(value = "/info", method = RequestMethod.POST)
     public Response updateBasicInfo(PostBasicInfoRequest request) throws Exception {
         Response response = new Response();
         accountBiz.updateBasicInfo(requireAccountid(), request, response);

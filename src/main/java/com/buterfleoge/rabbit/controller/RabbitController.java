@@ -19,10 +19,7 @@ public abstract class RabbitController {
     private HttpServletRequest httpServletRequest;
 
     protected AccountBasicInfo getAccountBasicInfo() {
-        HttpSession httpSession = httpServletRequest.getSession(false);
-        if (httpSession == null) {
-            return null;
-        }
+        HttpSession httpSession = httpServletRequest.getSession();
         return (AccountBasicInfo) httpSession.getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
     }
 

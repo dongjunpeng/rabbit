@@ -60,6 +60,7 @@ public class OrderController extends RabbitController {
         return response;
     }
 
+    @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.GET)
     public GetOrderResponse getOrder(GetOrderRequest request) throws Exception {
         GetOrderResponse response = new GetOrderResponse();
@@ -111,7 +112,7 @@ public class OrderController extends RabbitController {
     public String getOrderPage(@PathVariable Long orderid) throws Exception {
         Long accountid = requireAccountid();
         OrderInfo orderInfo = orderInfoRepository.findByOrderidAndAccountid(orderid, accountid);
-        return orderInfo == null ? "redirect:notfound" : "order";
+        return orderInfo == null ? "redirect:/notfound" : "order";
     }
 
 }
