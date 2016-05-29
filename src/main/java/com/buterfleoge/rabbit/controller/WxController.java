@@ -3,6 +3,7 @@ package com.buterfleoge.rabbit.controller;
 import java.net.URLEncoder;
 import java.util.Date;
 
+import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -10,18 +11,17 @@ import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.buterfleoge.whale.Constants.CacheKey;
+import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.CookieKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
-import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.biz.account.WxBiz;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
@@ -31,7 +31,6 @@ import com.buterfleoge.whale.type.entity.AccountSetting;
 import com.buterfleoge.whale.type.enums.AccountStatus;
 import com.buterfleoge.whale.type.enums.Gender;
 import com.buterfleoge.whale.type.enums.IdType;
-import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
 
@@ -42,7 +41,7 @@ import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
  */
 @Controller
 @RequestMapping("/wx")
-public class WxController implements InitializingBean {
+public class WxController {
 
     private static final Logger LOG = LoggerFactory.getLogger(WxController.class);
 
@@ -52,88 +51,73 @@ public class WxController implements InitializingBean {
     @Autowired
     private WxBiz wxBiz;
 
+    @Resource(name = "cacheTemplate")
+    private ValueOperations<String, Object> operations;
+
     @Autowired
     private AccountSettingRepository accountSettingRepository;
 
     @Autowired
     private AccountInfoRepository accountInfoRepository;
 
-    @Autowired
-    private RedisTemplate<String, Object> cacheTemplate;
-
     @RequestMapping(value = "/login")
     public void wxLogin(HttpServletRequest request, HttpServletResponse httpResponse) throws Exception {
         String state = createState();
         String redirectUri = createRedirectUri();
         String wxLoginUri = wxBiz.getLoginUri(state, redirectUri);
-        request.getSession().setAttribute(SessionKey.WX_LOGIN_STATE, state);
+        setState(state);
         httpResponse.sendRedirect(wxLoginUri);
     }
 
     @RequestMapping(value = "/callback")
-    public void wxCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            response.sendRedirect("/wx/failed");
-            return;
-        }
-        String sessionState = getState(session);
+    @Transactional(rollbackFor = Exception.class)
+    public String wxCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        HttpSession session = request.getSession();
         String code = request.getParameter("code");
-        String wxState = request.getParameter("state");
-        if (StringUtils.isEmpty(code) || sessionState == null || !sessionState.equals(wxState)) {
-            response.sendRedirect("/wx/failed");
-            return;
+        if (StringUtils.isEmpty(code) || getState(request.getParameter("state")) == null) {
+            return "redirect:/wx/failed";
         }
-        WxAccessTokenResponse accessToken = null;
-        WxUserinfoResponse userinfoResponse = null;
-        try {
-            accessToken = wxBiz.getAccessToken(code);
-            userinfoResponse = wxBiz.getUserinfo(accessToken.getAccess_token(), accessToken.getOpenid());
-        } catch (Exception e) {
-            LOG.error("call wx failed", e);
-            response.sendRedirect("/wx/failed");
-            return;
+        WxAccessTokenResponse accessToken = wxBiz.getAccessToken(code);
+        WxUserinfoResponse userinfoResponse = wxBiz.getUserinfo(accessToken.getAccess_token(), accessToken.getOpenid());
+        if (accessToken == null || userinfoResponse == null) {
+            return "redirect:/wx/failed";
         }
-        AccountInfo info = null;
         AccountSetting setting = null;
         try {
             setting = accountSettingRepository.findByWxid(userinfoResponse.getUnionid());
-            if (setting != null) {
-                info = accountInfoRepository.findByAccountid(setting.getAccountid());
-                addBasicInfoToSession(info, setting, session);
-                addCookie(String.valueOf(info.getAccountid()), response);
-                addAccessTokenToCache(info.getAccountid(), accessToken);
-                response.sendRedirect("/account/" + info.getAccountid());
-                return;
-            }
         } catch (Exception e) {
-            LOG.error("find account in db failed", e);
-            response.sendRedirect("/wx/failed");
-            return;
+            LOG.error("find account setting failed, wxid: " + userinfoResponse.getUnionid(), e);
+            return "redirect:/wx/failed";
+        }
+        AccountInfo info = null;
+        String redirectPage = null;
+        if (setting != null) {
+            try {
+                info = accountInfoRepository.findOne(setting.getAccountid());
+                redirectPage = WebConfig.getAccountHomePage(setting.getAccountid());
+            } catch (Exception e) {
+                LOG.error("find account info failed, accountid: " + setting.getAccountid(), e);
+                return "redirect:/wx/failed";
+            }
+        } else {
+            info = createAccountInfo();
+            setting = createAccountSetting(userinfoResponse, info);
+            redirectPage = WebConfig.getAccountHomePage(info.getAccountid()) + "/info";
         }
 
-        info = createAccountInfo();
-        try {
-            info = accountInfoRepository.save(info);
-            setting = createAccountSetting(userinfoResponse, info);
-            setting = accountSettingRepository.save(setting);
-        } catch (Exception e) {
-            LOG.error("create account failed", e);
-            response.sendRedirect("/wx/failed");
-            return;
-        }
-        addBasicInfoToSession(info, setting, session);
-        addCookie(String.valueOf(info.getAccountid()), response);
-        addAccessTokenToCache(info.getAccountid(), accessToken);
-        response.sendRedirect("/account/" + info.getAccountid());
+        Long accountid = info.getAccountid();
+        WebConfig.addBasicInfoToSession(info, setting, session);
+        response.addCookie(createCookie(CookieKey.ACCOUNTID, accountid.toString()));
+        response.addCookie(createCookie(CookieKey.TOKEN, WebConfig.createToken(accountid)));
+        addAccessTokenToCache(accountid, accessToken);
+        return "redirect:" + redirectPage;
     }
 
     private static String createState() {
         StringBuilder sb = new StringBuilder(DefaultValue.TOKEN) //
                 .append(DefaultValue.SEPARATOR).append(System.currentTimeMillis()) //
                 .append(DefaultValue.SEPARATOR).append(Math.random());
-        String stringMd5 = Utils.stringMD5(sb.toString());
-        return stringMd5;
+        return Utils.stringMD5(sb.toString());
     }
 
     private String createRedirectUri() throws Exception {
@@ -141,49 +125,39 @@ public class WxController implements InitializingBean {
         return URLEncoder.encode(sb.toString(), "UTF-8");
     }
 
-    private String getState(HttpSession session) {
-        String state = (String) session.getAttribute(SessionKey.WX_LOGIN_STATE);
-        return StringUtils.hasText(state) ? state : null;
+    private void setState(String state) {
+        try {
+            operations.set(WebConfig.getWxLoginStateKey(state), state);
+        } catch (Exception e) {
+            LOG.error("set state to cache failed, state: " + state, e);
+        }
     }
 
-    private void addBasicInfoToSession(AccountInfo info, AccountSetting setting, HttpSession session) {
-        AccountBasicInfo basicInfo = new AccountBasicInfo();
-        basicInfo.setAccountInfo(info);
-        basicInfo.setAccountSetting(setting);
-        session.setAttribute(SessionKey.ACCOUNT_BASIC_INFO, basicInfo);
+    private String getState(String state) {
+        try {
+            return (String) operations.get(WebConfig.getWxLoginStateKey(state));
+        } catch (Exception e) {
+            LOG.error("get wx login state from cache failed, state: " + state, e);
+            return null;
+        }
     }
 
-    private void addCookie(String accountid, HttpServletResponse response) {
-        response.addCookie(createCookie(CookieKey.ACCOUNTID, accountid));
-        response.addCookie(createCookie(CookieKey.TOKEN, createToken(accountid)));
-    }
-
-    private Cookie createCookie(String name, String value) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setPath("/");
-        cookie.setMaxAge(DefaultValue.COOKIE_EXPIRY);
-        return cookie;
-    }
-
-    private String createToken(String accountid) {
-        return Utils.stringMD5(accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN);
-    }
-
-    private void addAccessTokenToCache(Long accountid, WxAccessTokenResponse accessToken) {
-        String cacheKey = CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid;
-        cacheTemplate.opsForValue().set(cacheKey, accessToken);
-    }
-
-    protected AccountInfo createAccountInfo() {
+    protected AccountInfo createAccountInfo() throws Exception {
         AccountInfo info = new AccountInfo();
         info.setStatus(AccountStatus.WAIT_COMPLETE_INFO);
         info.setIdType(IdType.IDENTIFICATION);
         info.setAddTime(new Date());
         info.setModTime(info.getAddTime());
-        return info;
+
+        try {
+            return accountInfoRepository.save(info);
+        } catch (Exception e) {
+            LOG.error("insert account info failed, info: " + info, e);
+            throw e;
+        }
     }
 
-    protected AccountSetting createAccountSetting(WxUserinfoResponse userinfoResponse, AccountInfo info) {
+    protected AccountSetting createAccountSetting(WxUserinfoResponse userinfoResponse, AccountInfo info) throws Exception {
         AccountSetting setting = new AccountSetting();
         setting.setAccountid(info.getAccountid());
         setting.setNickname(userinfoResponse.getNickname());
@@ -193,7 +167,13 @@ public class WxController implements InitializingBean {
         setting.setAvatarUrl(userinfoResponse.getHeadimgurl());
         setting.setGender(getGender(userinfoResponse.getSex()));
         setting.setModTime(info.getAddTime());
-        return setting;
+
+        try {
+            return accountSettingRepository.save(setting);
+        } catch (Exception e) {
+            LOG.error("insert account setting failed, info: " + info + ", setting: " + setting, e);
+            throw e;
+        }
     }
 
     private Gender getGender(int sex) {
@@ -206,9 +186,20 @@ public class WxController implements InitializingBean {
         }
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        cacheTemplate.opsForValue().set("dkdkdk", new WxAccessTokenResponse());
-
+    private Cookie createCookie(String name, String value) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setPath("/");
+        cookie.setMaxAge(DefaultValue.COOKIE_EXPIRY);
+        return cookie;
     }
+
+    private void addAccessTokenToCache(Long accountid, WxAccessTokenResponse accessToken) {
+        try {
+            String cacheKey = WebConfig.getAccessTokenKey(accountid);
+            operations.set(cacheKey, accessToken);
+        } catch (Exception e) {
+            LOG.error("add access token to cache failed, accessToken: " + accessToken, e);
+        }
+    }
+
 }

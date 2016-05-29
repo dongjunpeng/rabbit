@@ -18,11 +18,12 @@ public abstract class RabbitController {
     @Autowired
     private HttpServletRequest httpServletRequest;
 
+    protected HttpSession getHttpSession() {
+        return httpServletRequest.getSession();
+    }
+
     protected AccountBasicInfo getAccountBasicInfo() {
-        HttpSession httpSession = httpServletRequest.getSession(false);
-        if (httpSession == null) {
-            return null;
-        }
+        HttpSession httpSession = getHttpSession();
         return (AccountBasicInfo) httpSession.getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
     }
 

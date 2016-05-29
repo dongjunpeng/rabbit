@@ -1,5 +1,7 @@
 package com.buterfleoge.rabbit.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -7,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.order.OrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
 import com.buterfleoge.whale.type.entity.OrderInfo;
@@ -38,6 +41,8 @@ import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
 @RequestMapping("/order")
 public class OrderController extends RabbitController {
 
+    private static final Logger LOG = LoggerFactory.getLogger(OrderController.class);
+
     @Autowired
     private OrderBiz orderBiz;
 
@@ -48,7 +53,18 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/new", method = RequestMethod.POST)
     public NewOrderResponse newOrder(NewOrderRequest request) throws Exception {
         NewOrderResponse response = new NewOrderResponse();
-        orderBiz.newOrder(requireAccountid(), request, response);
+        try {
+            OrderInfo orderInfo = orderInfoRepository.findByAccountidAndRouteidAndGroupid(requireAccountid(),
+                    request.getRouteid(), request.getGroupid());
+            if (orderInfo != null) {
+                response.setOrderid(orderInfo.getOrderid());
+            } else {
+                orderBiz.newOrder(requireAccountid(), request, response);
+            }
+        } catch (Exception e) {
+            LOG.error("find order info failed, reqid: " + request.getReqid(), e);
+            response.setStatus(Status.DB_ERROR);
+        }
         return response;
     }
 
@@ -60,6 +76,7 @@ public class OrderController extends RabbitController {
         return response;
     }
 
+    @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.GET)
     public GetOrderResponse getOrder(GetOrderRequest request) throws Exception {
         GetOrderResponse response = new GetOrderResponse();
@@ -111,7 +128,7 @@ public class OrderController extends RabbitController {
     public String getOrderPage(@PathVariable Long orderid) throws Exception {
         Long accountid = requireAccountid();
         OrderInfo orderInfo = orderInfoRepository.findByOrderidAndAccountid(orderid, accountid);
-        return orderInfo == null ? "redirect:notfound" : "order";
+        return orderInfo == null ? "redirect:/notfound" : "order";
     }
 
 }
