@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.biz.account.AccountBiz;
+import com.buterfleoge.whale.dao.AccountInfoRepository;
+import com.buterfleoge.whale.dao.AccountSettingRepository;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.account.DeleteContactsRequest;
@@ -39,6 +42,12 @@ public class AccountController extends RabbitController {
     @Autowired
     private AccountBiz accountBiz;
 
+    @Autowired
+    private AccountInfoRepository accountInfoRepository;
+
+    @Autowired
+    private AccountSettingRepository accountSettingRepository;
+
     @ResponseBody
     @RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
     public GetBasicInfoResponse getBasicInfo(GetBasicInfoRequest request, HttpServletRequest httpServletRequest)
@@ -56,8 +65,15 @@ public class AccountController extends RabbitController {
     @ResponseBody
     @RequestMapping(value = "/info", method = RequestMethod.POST)
     public Response updateBasicInfo(PostBasicInfoRequest request) throws Exception {
+        Long accountid = requireAccountid();
         Response response = new Response();
-        accountBiz.updateBasicInfo(requireAccountid(), request, response);
+        accountBiz.updateBasicInfo(accountid, request, response);
+        try {
+            WebConfig.addBasicInfoToSession(accountInfoRepository.findOne(accountid), accountSettingRepository.findOne(accountid),
+                    getHttpSession());
+        } catch (Exception e) {
+            LOG.error("find account info setting failed, reqid: " + request.getReqid(), e);
+        }
         return response;
     }
 
