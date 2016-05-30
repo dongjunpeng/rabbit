@@ -1,70 +1,67 @@
 package com.buterfleoge.rabbit.interceptor;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import org.springframework.core.Ordered;
-import org.springframework.util.StringUtils;
-import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ValueOperations;
 
+import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.SessionKey;
+import com.buterfleoge.whale.biz.account.WxBiz;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
+import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 
 /**
  *
  * @author xiezhenzong
  *
  */
-public abstract class AuthInterceptor implements HandlerInterceptor, Ordered {
+public abstract class AuthInterceptor extends RabbitInterceptor {
+
+    @Autowired
+    private WxBiz wxBiz;
+
+    @Resource(name = "cacheTemplate")
+    private ValueOperations<String, Object> operations;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-            throws Exception {
-        String path = request.getRequestURI();
-        System.out.println(path);
-        if (StringUtils.isEmpty(path)) {
-            return false;
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        AccountBasicInfo basicInfo = (AccountBasicInfo) request.getSession().getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
+        if (basicInfo != null) {
+            Long accountid = basicInfo.getAccountInfo().getAccountid();
+            String accountTokenCacheKey = WebConfig.getAccessTokenKey(accountid);
+            WxAccessTokenResponse accessToken = getAccessTokenFromCache(accountTokenCacheKey);
+            if (accessToken != null && wxBiz.isAccessTokenValid(accessToken.getAccess_token(), accessToken.getOpenid())) {
+                refreshToken(accessToken.getRefresh_token(), accountTokenCacheKey);
+                return hasAccountBasicInfo(request, response, accountid);
+            }
         }
-        if (!shouldPreHandle(path)) {
-            return true;
-        }
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            throw new IllegalStateException("");
-        }
-        
-        AccountBasicInfo basicInfo = (AccountBasicInfo) session.getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
-        if (basicInfo == null) {
-            throw new IllegalStateException("");
-        }
+        return noAccountBasicInfo(request, response);
+    }
 
-        if (hasAuth(basicInfo.getAccountInfo().getAccountid(), request, path)) {
-            return true;
-        } else {
-            response.sendRedirect("/noauth");
-            return false;
+    protected abstract boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception;
+
+    protected abstract boolean hasAccountBasicInfo(HttpServletRequest request, HttpServletResponse response, Long accountid)
+            throws Exception;
+
+    private WxAccessTokenResponse getAccessTokenFromCache(String accountTokenCacheKey) {
+        try {
+            return (WxAccessTokenResponse) operations.get(accountTokenCacheKey);
+        } catch (Exception e) {
+            LOG.error("get accessToken from cache failed, accountTokenCacheKey: " + accountTokenCacheKey, e);
+            return null;
         }
     }
 
-    protected abstract boolean shouldPreHandle(String path);
-
-    protected abstract boolean hasAuth(Long accountid, HttpServletRequest request, String path);
-
-    protected Long getAccountidFromReq(HttpServletRequest request) {
-        String temp = request.getParameter("accountid");
-        return StringUtils.isEmpty(temp) ? null : Long.parseLong(temp);
-    }
-
-    @Override
-    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
-            ModelAndView modelAndView) throws Exception {
-    }
-
-    @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
-            throws Exception {
+    private void refreshToken(String refreshToken, String accountTokenCacheKey) {
+        try {
+            WxAccessTokenResponse accessToken = wxBiz.refreshToken(refreshToken);
+            operations.set(accountTokenCacheKey, accessToken); // 用refreshToken来更新accessToken
+        } catch (Exception e) {
+            LOG.error("refresh token failed, refreshToken: " + refreshToken + ", accountTokenKey: " + accountTokenCacheKey, e);
+        }
     }
 
 }
