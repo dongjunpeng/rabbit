@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -13,6 +14,7 @@ import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.order.OrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
 import com.buterfleoge.whale.type.entity.OrderInfo;
+import com.buterfleoge.whale.type.enums.OrderStatusType;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.order.CancelOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.CreateOrderRequest;
@@ -55,8 +57,8 @@ public class OrderController extends RabbitController {
 
         NewOrderResponse response = new NewOrderResponse();
         try {
-            OrderInfo orderInfo = orderInfoRepository.findByAccountidAndRouteidAndGroupid(requireAccountid(),
-                    request.getRouteid(), request.getGroupid());
+            OrderInfo orderInfo = orderInfoRepository.findByAccountidAndRouteidAndGroupidAndStatusIn(requireAccountid(),
+                    request.getRouteid(), request.getGroupid(), OrderStatusType.NO_ALLOW_NEW.getOrderStatuses());
             if (orderInfo != null) {
                 response.setOrderid(orderInfo.getOrderid());
             } else {
@@ -71,7 +73,7 @@ public class OrderController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.POST)
-    public Response createOrder(CreateOrderRequest request) throws Exception {
+    public Response createOrder(@RequestBody CreateOrderRequest request) throws Exception {
         CreateOrderResponse response = new CreateOrderResponse();
         orderBiz.createOrder(requireAccountid(), request, response);
         return response;
