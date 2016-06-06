@@ -38,6 +38,7 @@ import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
  * @author xiezhenzong
  *
  */
+
 @Controller
 @RequestMapping("/wx")
 public class WxController {
@@ -155,7 +156,8 @@ public class WxController {
         }
     }
 
-    protected AccountSetting createAccountSetting(WxUserinfoResponse userinfoResponse, AccountInfo info) throws Exception {
+    protected AccountSetting createAccountSetting(WxUserinfoResponse userinfoResponse, AccountInfo info)
+            throws Exception {
         AccountSetting setting = new AccountSetting();
         setting.setAccountid(info.getAccountid());
         setting.setNickname(userinfoResponse.getNickname());
