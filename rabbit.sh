@@ -17,6 +17,9 @@ existIfError
 cp -r ./asset/* ./static/
 existIfError
 
+cp -r ./lib ./static/
+existIfError
+
 cd ../rabbit && cp -r ../kitty/static ${RESOURCES_PATH}
 existIfError
 
