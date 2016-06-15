@@ -101,6 +101,16 @@ public class AccountController extends RabbitController {
         return response;
     }
 
+    @RequestMapping(value = "/logout", method = RequestMethod.POST)
+    public String logout(@PathVariable Long accountid, Request request) throws Exception {
+        if (requireAccountid().equals(accountid)) {
+            return "account";
+        } else {
+            LOG.warn("No auth for get homepage of accountid: " + accountid + ", reqid: " + request.getReqid());
+            return "redirect:notauth";
+        }
+    }
+
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)
     public String getAccountPage(@PathVariable Long accountid, Request request) throws Exception {
         if (requireAccountid().equals(accountid)) {

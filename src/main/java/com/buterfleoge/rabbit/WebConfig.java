@@ -52,6 +52,8 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     static {
         viewMap.put("/", "forward:/index.html");
+        viewMap.put("/routes", "forward:/routes.html");
+        viewMap.put("/activities", "forward:/activities.html");
     }
 
     @Value("${img.host.url}")
