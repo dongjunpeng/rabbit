@@ -25,11 +25,11 @@ import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.biz.account.WxBiz;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.dao.AccountSettingRepository;
+import com.buterfleoge.whale.type.AccountStatus;
+import com.buterfleoge.whale.type.Gender;
+import com.buterfleoge.whale.type.IdType;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.entity.AccountSetting;
-import com.buterfleoge.whale.type.enums.AccountStatus;
-import com.buterfleoge.whale.type.enums.Gender;
-import com.buterfleoge.whale.type.enums.IdType;
 import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
 
