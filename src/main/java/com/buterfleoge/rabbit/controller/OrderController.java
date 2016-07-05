@@ -15,6 +15,7 @@ import com.buterfleoge.whale.biz.order.OrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
 import com.buterfleoge.whale.type.OrderStatusType;
 import com.buterfleoge.whale.type.entity.OrderInfo;
+import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.order.CancelOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.CreateOrderRequest;
@@ -127,7 +128,7 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/{orderid}", method = RequestMethod.GET)
-    public String getOrderPage(@PathVariable Long orderid) throws Exception {
+    public String getOrderPage(Request request, @PathVariable Long orderid) throws Exception {
         Long accountid = requireAccountid();
         OrderInfo orderInfo = orderInfoRepository.findByOrderidAndAccountid(orderid, accountid);
         return orderInfo == null ? "redirect:/notfound" : "order";
