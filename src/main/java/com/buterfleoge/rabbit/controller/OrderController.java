@@ -34,9 +34,9 @@ import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
 
 /**
- * 
+ *
  * 订单相关处理
- * 
+ *
  * @author Brent24
  *
  */
@@ -128,7 +128,7 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/{orderid}", method = RequestMethod.GET)
-    public String getOrderPage(Request request, @PathVariable Long orderid) throws Exception {
+    public String getOrderPage(@PathVariable Long orderid, Request request) throws Exception {
         Long accountid = requireAccountid();
         OrderInfo orderInfo = orderInfoRepository.findByOrderidAndAccountid(orderid, accountid);
         return orderInfo == null ? "redirect:/notfound" : "order";
