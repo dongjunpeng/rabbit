@@ -33,7 +33,7 @@ public class CookieInterceptor extends RabbitInterceptor {
     }
 
     @Override
-    protected boolean preHandle(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    protected boolean preHandle(String path, HttpServletRequest request, HttpServletResponse response) throws Exception {
         Object accountBasicInfo = request.getSession().getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
         if (accountBasicInfo == null) {
             Cookie[] cookies = request.getCookies();

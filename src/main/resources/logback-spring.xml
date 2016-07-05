@@ -1,9 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration debug="false">
 	<include resource="org/springframework/boot/logging/logback/defaults.xml" />
-	<property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}spring.log}" />
-	<include resource="org/springframework/boot/logging/logback/file-appender.xml" />
+	<include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+
+	<property name="ACCESS_FILE" value="./logs/rabbit-access" />
+	<property name="INVOKE_FILE" value="./logs/rabbit-invoke" />
+	<property name="INFO_FILE" value="./logs/rabbit-info" />
+	<property name="ERROR_FILE" value="./logs/rabbit-error" />
+
+	<appender name="RABBIT_ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${ACCESS_FILE}.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${ACCESS_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>12</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+			<charset>utf-8</charset>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>INFO</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+	</appender>
+
+	<appender name="RABBIT_INVOKE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${INVOKE_FILE}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${INVOKE_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>12</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+	<appender name="RABBIT_INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${INFO_FILE}.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${INFO_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>12</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+			<charset>utf-8</charset>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>INFO</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+	</appender>
+
+	<appender name="RABBIT_ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${ERROR_FILE}.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${ERROR_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>12</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+			<charset>utf-8</charset>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>WARN</level>
+		</filter>
+	</appender>
+
+	<logger name="com.buterfleoge.rabbit.controller.ControllerAspect" level="INFO" additivity="false">
+		<appender-ref ref="RABBIT_ACCESS_FILE" />
+	</logger>
+	
+	<logger name="com.buterfleoge.whale.InvokeLogger" level="INFO" additivity="false">
+        <appender-ref ref="RABBIT_INVOKE_FILE" />
+    </logger>
+
 	<root level="INFO">
-		<appender-ref ref="FILE" />
+		<appender-ref ref="RABBIT_INFO_FILE" />
+		<appender-ref ref="RABBIT_ERROR_FILE" />
+		<!--<appender-ref ref="CONSOLE" /> -->
 	</root>
 </configuration>

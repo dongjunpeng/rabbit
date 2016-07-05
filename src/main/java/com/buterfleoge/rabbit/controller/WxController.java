@@ -30,6 +30,7 @@ import com.buterfleoge.whale.type.Gender;
 import com.buterfleoge.whale.type.IdType;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.entity.AccountSetting;
+import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
 
@@ -61,7 +62,7 @@ public class WxController {
     private AccountInfoRepository accountInfoRepository;
 
     @RequestMapping(value = "/login")
-    public void wxLogin(HttpServletRequest request, HttpServletResponse httpResponse) throws Exception {
+    public void wxLogin(Request req, HttpServletRequest request, HttpServletResponse httpResponse) throws Exception {
         String state = createState();
         String redirectUri = createRedirectUri();
         String wxLoginUri = wxBiz.getLoginUri(state, redirectUri);
@@ -70,23 +71,26 @@ public class WxController {
     }
 
     @RequestMapping(value = "/callback")
-    public String wxCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public String wxCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
         HttpSession session = request.getSession();
         String code = request.getParameter("code");
         if (StringUtils.isEmpty(code) || getState(request.getParameter("state")) == null) {
-            return "redirect:/wx/failed";
+            return WebConfig.REDIRECT_WXFAILED;
         }
         WxAccessTokenResponse accessToken = wxBiz.getAccessToken(code);
+        if (accessToken == null || accessToken.getErrcode() != null) {
+            return WebConfig.REDIRECT_WXFAILED;
+        }
         WxUserinfoResponse userinfoResponse = wxBiz.getUserinfo(accessToken.getAccess_token(), accessToken.getOpenid());
-        if (accessToken == null || userinfoResponse == null) {
-            return "redirect:/wx/failed";
+        if (userinfoResponse == null || userinfoResponse.getErrcode() != null) {
+            return WebConfig.REDIRECT_WXFAILED;
         }
         AccountSetting setting = null;
         try {
             setting = accountSettingRepository.findByWxid(userinfoResponse.getUnionid());
         } catch (Exception e) {
             LOG.error("find account setting failed, wxid: " + userinfoResponse.getUnionid(), e);
-            return "redirect:/wx/failed";
+            return WebConfig.REDIRECT_WXFAILED;
         }
         AccountInfo info = null;
         String redirectPage = null;
@@ -96,7 +100,7 @@ public class WxController {
                 redirectPage = WebConfig.getAccountHomePage(setting.getAccountid());
             } catch (Exception e) {
                 LOG.error("find account info failed, accountid: " + setting.getAccountid(), e);
-                return "redirect:/wx/failed";
+                return WebConfig.REDIRECT_WXFAILED;
             }
         } else {
             info = createAccountInfo();

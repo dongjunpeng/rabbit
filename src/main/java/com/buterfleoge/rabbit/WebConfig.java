@@ -23,10 +23,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 
 import com.buterfleoge.rabbit.interceptor.CookieInterceptor;
 import com.buterfleoge.rabbit.interceptor.LoginStateInterceptor;
+import com.buterfleoge.rabbit.interceptor.RabbitWebContextInterceptor;
 import com.buterfleoge.rabbit.interceptor.WxLoginInterceptor;
 import com.buterfleoge.whale.Constants.CacheKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
 import com.buterfleoge.whale.Constants.SessionKey;
+import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.entity.AccountSetting;
@@ -47,6 +49,9 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     public static final String ACCOUNT_HOME_URL_PREFIX = "/account";
     public static final String ORDER_URL_PREFIX = "/order";
     public static final String WX_LOGIN_URL = "/wx/login";
+    public static final String REDIRECT_NOTAUTH = "redirect:notauth";
+    public static final String REDIRECT_WXFAILED = "redirect:/wx/failed";
+    public static final String REDIRECT_FAILED = "redirect:systemerror";
 
     private static final Map<String, String> viewMap = new HashMap<String, String>();
 
@@ -54,6 +59,14 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         viewMap.put("/", "forward:/index.html");
         viewMap.put("/routes", "forward:/routes.html");
         viewMap.put("/activities", "forward:/activities.html");
+    }
+
+    private static final Map<String, Integer> FAILED_PATH_STATUS_MAP = new HashMap<String, Integer>();
+
+    static {
+        FAILED_PATH_STATUS_MAP.put(REDIRECT_NOTAUTH, Status.AUTH_ERROR);
+        FAILED_PATH_STATUS_MAP.put(REDIRECT_WXFAILED, Status.BIZ_ERROR);
+        FAILED_PATH_STATUS_MAP.put(REDIRECT_FAILED, Status.SYSTEM_ERROR);
     }
 
     @Value("${img.host.url}")
@@ -76,6 +89,11 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         }
     }
 
+    @Bean(name = "rabbitWebContextInterceptor")
+    public HandlerInterceptor getRabbitWebContextInterceptor() {
+        return new RabbitWebContextInterceptor();
+    }
+
     @Bean(name = "cookieInterceptor")
     public HandlerInterceptor getCookieInterceptor() {
         return new CookieInterceptor();
@@ -93,9 +111,14 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(getRabbitWebContextInterceptor());
         registry.addInterceptor(getCookieInterceptor());
         registry.addInterceptor(getWxLoginInterceptor());
         registry.addInterceptor(getLoginStateInterceptor());
+    }
+
+    public static Integer getStatusByFailedPath(String path) {
+        return FAILED_PATH_STATUS_MAP.get(path);
     }
 
     public static String getAccountHomePage(Long accountid) {

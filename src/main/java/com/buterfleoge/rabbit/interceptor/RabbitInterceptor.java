@@ -15,14 +15,14 @@ import org.springframework.web.servlet.ModelAndView;
  */
 public abstract class RabbitInterceptor implements HandlerInterceptor {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(WxLoginInterceptor.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(RabbitInterceptor.class);
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (!shouldPreHandle(request.getRequestURI())) {
             return true;
         }
-        return preHandle(request, response);
+        return preHandle(request.getRequestURI(), request, response);
     }
 
     @Override
@@ -35,8 +35,10 @@ public abstract class RabbitInterceptor implements HandlerInterceptor {
             throws Exception {
     }
 
-    protected abstract boolean shouldPreHandle(String path);
+    protected boolean shouldPreHandle(String path) {
+        return true;
+    }
 
-    protected abstract boolean preHandle(HttpServletRequest request, HttpServletResponse response) throws Exception;
+    protected abstract boolean preHandle(String path, HttpServletRequest request, HttpServletResponse response) throws Exception;
 
 }
