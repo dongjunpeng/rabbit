@@ -54,7 +54,6 @@ public class OrderController extends RabbitController {
     @ResponseBody
     @RequestMapping(value = "/new", method = RequestMethod.POST)
     public NewOrderResponse newOrder(NewOrderRequest request) throws Exception {
-
         NewOrderResponse response = new NewOrderResponse();
         try {
             OrderInfo orderInfo = orderInfoRepository.findByAccountidAndRouteidAndGroupidAndStatusIn(requireAccountid(),

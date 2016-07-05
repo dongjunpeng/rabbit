@@ -27,15 +27,16 @@ public abstract class AuthInterceptor extends RabbitInterceptor {
     private ValueOperations<String, Object> operations;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public boolean preHandle(String path, HttpServletRequest request, HttpServletResponse response) throws Exception {
         AccountBasicInfo basicInfo = (AccountBasicInfo) request.getSession().getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
         if (basicInfo != null) {
             Long accountid = basicInfo.getAccountInfo().getAccountid();
             String accountTokenCacheKey = WebConfig.getAccessTokenKey(accountid);
             WxAccessTokenResponse accessToken = getAccessTokenFromCache(accountTokenCacheKey);
             if (accessToken != null && wxBiz.isAccessTokenValid(accessToken.getAccess_token(), accessToken.getOpenid())) {
-                refreshToken(accessToken.getRefresh_token(), accountTokenCacheKey);
-                return hasAccountBasicInfo(request, response, accountid);
+                if (refreshToken(accessToken.getRefresh_token(), accountTokenCacheKey)) {
+                    return hasAccountBasicInfo(request, response, accountid);
+                }
             }
         }
         return noAccountBasicInfo(request, response);
@@ -55,12 +56,18 @@ public abstract class AuthInterceptor extends RabbitInterceptor {
         }
     }
 
-    private void refreshToken(String refreshToken, String accountTokenCacheKey) {
+    private boolean refreshToken(String refreshToken, String accountTokenCacheKey) {
         try {
             WxAccessTokenResponse accessToken = wxBiz.refreshToken(refreshToken);
-            operations.set(accountTokenCacheKey, accessToken); // 用refreshToken来更新accessToken
+            if (accessToken == null || accessToken.getErrcode() != null) {
+                throw new Exception(accessToken.getErrmsg());
+            } else {
+                operations.set(accountTokenCacheKey, accessToken); // 用refreshToken来更新accessToken
+            }
+            return true;
         } catch (Exception e) {
             LOG.error("refresh token failed, refreshToken: " + refreshToken + ", accountTokenKey: " + accountTokenCacheKey, e);
+            return false;
         }
     }
 
