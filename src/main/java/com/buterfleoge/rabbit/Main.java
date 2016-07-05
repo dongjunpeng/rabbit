@@ -11,9 +11,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
- * 
+ *
  * rabbit系统的入口
- * 
+ *
  * @author xiezhenzong
  *
  */

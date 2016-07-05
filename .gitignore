@@ -15,6 +15,7 @@ hs_err_pid*
 .DS_Store
 .classpath
 
+logs/
 src/main/resources/static/
 src/main/resources/application.properties
 
