@@ -93,7 +93,7 @@ public class RabbitJacksonAnnotationIntrospector extends JacksonAnnotationIntros
         NumberFormat numberFormat = _findAnnotation(a, NumberFormat.class);
         if (numberFormat != null) {
             NumberFormatAnnotationFormatterFactory factory = new NumberFormatAnnotationFormatterFactory();
-            Parser<Number> parser = (Parser<Number>) factory.getParser(numberFormat, Number.class);
+            Parser<Number> parser = factory.getParser(numberFormat, Number.class);
             return new RabbitDerializer<Number>(parser);
         }
         return super.findDeserializer(a);
@@ -107,13 +107,14 @@ public class RabbitJacksonAnnotationIntrospector extends JacksonAnnotationIntros
             this.printer = printer;
         }
 
+        @Override
         public void serialize(T value, JsonGenerator gen, SerializerProvider provider)
                 throws IOException, JsonProcessingException {
             if (value == null) {
                 gen.writeNull();
                 return;
             }
-            String valueStr = printer.print(value, provider.getLocale());
+            String valueStr = printer.print(value, Locale.CHINA);
             gen.writeString(valueStr);
         }
     }
