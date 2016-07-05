@@ -114,7 +114,7 @@ public class RabbitJacksonAnnotationIntrospector extends JacksonAnnotationIntros
                 gen.writeNull();
                 return;
             }
-            String valueStr = printer.print(value, Locale.CHINA);
+            String valueStr = printer.print(value, provider.getLocale());
             gen.writeString(valueStr);
         }
     }
