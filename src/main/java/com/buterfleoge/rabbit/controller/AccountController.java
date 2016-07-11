@@ -1,7 +1,11 @@
 package com.buterfleoge.rabbit.controller;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,8 +73,8 @@ public class AccountController extends RabbitController {
         Response response = new Response();
         accountBiz.updateBasicInfo(accountid, request, response);
         try {
-            WebConfig.addBasicInfoToSession(accountInfoRepository.findOne(accountid), accountSettingRepository.findOne(accountid),
-                    getHttpSession());
+            WebConfig.addBasicInfoToSession(accountInfoRepository.findOne(accountid),
+                    accountSettingRepository.findOne(accountid), getHttpSession());
         } catch (Exception e) {
             LOG.error("find account info setting failed, reqid: " + request.getReqid(), e);
         }
@@ -101,14 +105,19 @@ public class AccountController extends RabbitController {
         return response;
     }
 
-    @RequestMapping(value = "/logout", method = RequestMethod.POST)
-    public String logout(@PathVariable Long accountid, Request request) throws Exception {
-        if (requireAccountid().equals(accountid)) {
-            return "account";
-        } else {
-            LOG.warn("No auth for get homepage of accountid: " + accountid + ", reqid: " + request.getReqid());
-            return "redirect:notauth";
+    @RequestMapping(value = "/logout", method = RequestMethod.GET)
+    public String logout(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        HttpSession httpSession = getHttpSession();
+        httpSession.invalidate();
+        Cookie[] cookies = request.getCookies();
+        if (ArrayUtils.isNotEmpty(cookies)) {
+            for (Cookie cookie : cookies) {
+                cookie.setMaxAge(0);
+                cookie.setPath("/");
+                response.addCookie(cookie);
+            }
         }
+        return "redirect:/";
     }
 
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)

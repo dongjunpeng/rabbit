@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.CookieKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
+import com.buterfleoge.whale.RsaEncryption;
 import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.biz.account.WxBiz;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
@@ -60,6 +61,9 @@ public class WxController {
 
     @Autowired
     private AccountInfoRepository accountInfoRepository;
+
+    @Autowired
+    private RsaEncryption rsaEncryption;
 
     @RequestMapping(value = "/login")
     public void wxLogin(Request req, HttpServletRequest request, HttpServletResponse httpResponse) throws Exception {
@@ -109,9 +113,14 @@ public class WxController {
         }
 
         Long accountid = info.getAccountid();
+        String token = WebConfig.createToken(accountid);
+        String encryToken = new String(rsaEncryption.encrypt(token));
+        if (StringUtils.isEmpty(encryToken)) {
+            return WebConfig.REDIRECT_WXFAILED;
+        }
         WebConfig.addBasicInfoToSession(info, setting, session);
         response.addCookie(createCookie(CookieKey.ACCOUNTID, accountid.toString()));
-        response.addCookie(createCookie(CookieKey.TOKEN, WebConfig.createToken(accountid)));
+        response.addCookie(createCookie(CookieKey.TOKEN, encryToken));
         addAccessTokenToCache(accountid, accessToken);
         return "redirect:" + redirectPage;
     }
