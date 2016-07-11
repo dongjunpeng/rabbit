@@ -9,6 +9,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -145,7 +146,23 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     }
 
     public static String createToken(Long accountid) {
-        return Utils.stringMD5(accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN);
+        return Utils.stringMD5(accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN + DefaultValue.SEPARATOR
+                + System.currentTimeMillis());
+    }
+
+    public static Long getAccountidFromToken(String token) {
+        if (StringUtils.isEmpty(token)) {
+            return null;
+        }
+        String[] temp = token.split(DefaultValue.SEPARATOR);
+        if (temp.length != 3) {
+            return null;
+        }
+        try {
+            return Long.parseLong(temp[1]);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static String getAccessTokenKey(Long accountid) {

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.CookieKey;
 import com.buterfleoge.whale.Constants.SessionKey;
+import com.buterfleoge.whale.RsaEncryption;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.dao.AccountSettingRepository;
 import com.buterfleoge.whale.type.entity.AccountInfo;
@@ -27,6 +28,9 @@ public class CookieInterceptor extends RabbitInterceptor {
     @Autowired
     private AccountSettingRepository accountSettingRepository;
 
+    @Autowired
+    private RsaEncryption rsaEncryption;
+
     @Override
     protected boolean shouldPreHandle(String path) {
         return true;
@@ -38,8 +42,9 @@ public class CookieInterceptor extends RabbitInterceptor {
         if (accountBasicInfo == null) {
             Cookie[] cookies = request.getCookies();
             Long accountid = getAccountidFromCookie(cookies);
-            String token = WebConfig.getValueFromCookies(cookies, CookieKey.TOKEN);
-            if (accountid != null && WebConfig.createToken(accountid).equals(token)) {
+            String encryToken = WebConfig.getValueFromCookies(cookies, CookieKey.TOKEN);
+            String token = rsaEncryption.decrypt(encryToken.getBytes());
+            if (accountid != null && accountid.equals(WebConfig.getAccountidFromToken(token))) {
                 try {
                     AccountInfo info = accountInfoRepository.findOne(accountid);
                     if (info != null) {
