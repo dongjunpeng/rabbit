@@ -19,9 +19,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.buterfleoge.rabbit.WebConfig;
+import com.buterfleoge.whale.AesEncryption;
 import com.buterfleoge.whale.Constants.CookieKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
-import com.buterfleoge.whale.RsaEncryption;
 import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.biz.account.WxBiz;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
@@ -63,7 +63,7 @@ public class WxController {
     private AccountInfoRepository accountInfoRepository;
 
     @Autowired
-    private RsaEncryption rsaEncryption;
+    private AesEncryption aesEncryption;
 
     @RequestMapping(value = "/login")
     public void wxLogin(Request req, HttpServletRequest request, HttpServletResponse httpResponse) throws Exception {
@@ -113,8 +113,7 @@ public class WxController {
         }
 
         Long accountid = info.getAccountid();
-        String token = WebConfig.createToken(accountid);
-        String encryToken = new String(rsaEncryption.encrypt(token));
+        String encryToken = new String(aesEncryption.encrypt(WebConfig.createToken(accountid)));
         if (StringUtils.isEmpty(encryToken)) {
             return WebConfig.REDIRECT_WXFAILED;
         }

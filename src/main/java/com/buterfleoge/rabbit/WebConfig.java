@@ -30,7 +30,6 @@ import com.buterfleoge.whale.Constants.CacheKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
 import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.Constants.Status;
-import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.entity.AccountSetting;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
@@ -146,8 +145,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     }
 
     public static String createToken(Long accountid) {
-        return Utils.stringMD5(accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN + DefaultValue.SEPARATOR
-                + System.currentTimeMillis());
+        return accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN + DefaultValue.SEPARATOR + System.currentTimeMillis();
     }
 
     public static Long getAccountidFromToken(String token) {
@@ -155,11 +153,11 @@ public class WebConfig extends WebMvcConfigurerAdapter {
             return null;
         }
         String[] temp = token.split(DefaultValue.SEPARATOR);
-        if (temp.length != 3) {
+        if (temp.length != 3 || DefaultValue.TOKEN.equals(temp[1])) {
             return null;
         }
         try {
-            return Long.parseLong(temp[1]);
+            return Long.parseLong(temp[0]);
         } catch (Exception e) {
             return null;
         }
