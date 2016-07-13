@@ -74,7 +74,7 @@
 		</filter>
 	</appender>
 
-	<logger name="com.buterfleoge.rabbit.controller.ControllerAspect" level="INFO" additivity="false">
+	<logger name="com.buterfleoge.whale.AccessLogger" level="INFO" additivity="false">
 		<appender-ref ref="RABBIT_ACCESS_FILE" />
 	</logger>
 	
