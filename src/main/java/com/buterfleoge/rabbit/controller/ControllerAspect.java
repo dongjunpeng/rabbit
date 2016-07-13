@@ -12,6 +12,7 @@ import org.springframework.util.ClassUtils;
 
 import com.buterfleoge.rabbit.RabbitWebContext;
 import com.buterfleoge.rabbit.WebConfig;
+import com.buterfleoge.whale.AccessLogger;
 import com.buterfleoge.whale.Constants;
 import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.Utils;
@@ -70,13 +71,18 @@ public class ControllerAspect {
             }
         } finally {
             long startTime = RabbitWebContext.getStartTime();
-            StringBuilder builder = new StringBuilder("[reqid=").append(reqid).append("][path=")
-                    .append(RabbitWebContext.getRequestURI()).append("][remote=").append(RabbitWebContext.getRemoteIp())
-                    .append("][local=").append(Constants.LOCAL).append("][request=").append(request)
-                    .append("][reponse=").append(response).append("][starttime=").append(startTime)
-                    .append("][timecost=").append(System.currentTimeMillis() - startTime).append("][status=")
-                    .append(status).append("]");
-            LOG.info(builder.toString());
+            // @formatter:off
+            StringBuilder builder = new StringBuilder("[reqid=").append(reqid)
+                    .append("][path=").append(RabbitWebContext.getRequestURI())
+                    .append("][remote=").append(RabbitWebContext.getRemoteIp())
+                    .append("][local=").append(Constants.LOCAL)
+                    .append("][request=").append(request)
+                    .append("][reponse=").append(response)
+                    .append("][starttime=").append(startTime)
+                    .append("][timecost=").append(System.currentTimeMillis() - startTime)
+                    .append("][status=").append(status).append("]");
+            // @formatter:on
+            AccessLogger.log(builder.toString());
         }
         return response;
     }
