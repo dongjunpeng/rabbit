@@ -155,8 +155,8 @@ public class WxController {
 
     protected AccountInfo createAccountInfo() throws Exception {
         AccountInfo info = new AccountInfo();
-        info.setStatus(AccountStatus.WAIT_COMPLETE_INFO);
-        info.setIdType(IdType.IDENTIFICATION);
+        info.setStatus(AccountStatus.WAIT_COMPLETE_INFO.value);
+        info.setIdType(IdType.IDENTIFICATION.value);
         info.setAddTime(new Date());
         info.setModTime(info.getAddTime());
 
@@ -188,13 +188,13 @@ public class WxController {
         }
     }
 
-    private Gender getGender(int sex) {
+    private Integer getGender(int sex) {
         if (sex == WxUserinfoResponse.SEX_MALE) {
-            return Gender.MALE;
+            return Gender.MALE.value;
         } else if (sex == WxUserinfoResponse.SEX_FEMALE) {
-            return Gender.FEMALE;
+            return Gender.FEMALE.value;
         } else {
-            return Gender.UNKNOW;
+            return Gender.UNKNOW.value;
         }
     }
 
