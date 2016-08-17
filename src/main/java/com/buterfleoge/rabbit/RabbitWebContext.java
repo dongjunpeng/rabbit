@@ -23,7 +23,10 @@ public class RabbitWebContext {
     }
 
     public static final void clear() {
-        context.get().clear();
+        Map<String, Object> data = context.get();
+        if (data != null) {
+            data.clear();
+        }
         context.remove();
     }
 

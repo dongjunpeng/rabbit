@@ -12,9 +12,9 @@ import org.springframework.util.ClassUtils;
 
 import com.buterfleoge.rabbit.RabbitWebContext;
 import com.buterfleoge.rabbit.WebConfig;
-import com.buterfleoge.whale.AccessLogger;
 import com.buterfleoge.whale.Constants;
 import com.buterfleoge.whale.Constants.Status;
+import com.buterfleoge.whale.log.AccessLogger;
 import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
@@ -88,10 +88,13 @@ public class ControllerAspect {
     }
 
     private String createReqid() {
-        StringBuilder builder = new StringBuilder("[path=").append(RabbitWebContext.getRequestURI()).append("][remote=")
-                .append(RabbitWebContext.getRemoteIp()).append("][local=").append(Constants.LOCAL)
-                .append("][starttime=").append(RabbitWebContext.getStartTime()).append("][random=")
-                .append(Math.random()).append("]");
+        // @formatter:off
+        StringBuilder builder = new StringBuilder("[path=").append(RabbitWebContext.getRequestURI())
+                .append("][remote=").append(RabbitWebContext.getRemoteIp())
+                .append("][local=").append(Constants.LOCAL)
+                .append("][starttime=").append(RabbitWebContext.getStartTime())
+                .append("][random=").append(Math.random()).append("]");
+        // @formatter:on
         return Utils.stringMD5(builder.toString());
     }
 

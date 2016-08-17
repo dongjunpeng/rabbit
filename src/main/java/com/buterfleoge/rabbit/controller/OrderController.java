@@ -1,5 +1,7 @@
 package com.buterfleoge.rabbit.controller;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,10 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.order.OrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
-import com.buterfleoge.whale.type.OrderStatusType;
+import com.buterfleoge.whale.type.OrderStatusCategory;
 import com.buterfleoge.whale.type.entity.OrderInfo;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
@@ -28,6 +31,8 @@ import com.buterfleoge.whale.type.protocol.order.GetOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.GetOrderResponse;
 import com.buterfleoge.whale.type.protocol.order.NewOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.NewOrderResponse;
+import com.buterfleoge.whale.type.protocol.order.PayOrderByAlipayResponse;
+import com.buterfleoge.whale.type.protocol.order.PayOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.RefoundRequest;
 import com.buterfleoge.whale.type.protocol.order.RefoundResponse;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
@@ -58,7 +63,7 @@ public class OrderController extends RabbitController {
         NewOrderResponse response = new NewOrderResponse();
         try {
             OrderInfo orderInfo = orderInfoRepository.findByAccountidAndRouteidAndGroupidAndStatusIn(requireAccountid(),
-                    request.getRouteid(), request.getGroupid(), OrderStatusType.NO_ALLOW_NEW.getOrderStatuses());
+                    request.getRouteid(), request.getGroupid(), OrderStatusCategory.NO_ALLOW_NEW.getOrderStatuses());
             if (orderInfo != null) {
                 response.setOrderid(orderInfo.getOrderid());
             } else {
@@ -93,6 +98,19 @@ public class OrderController extends RabbitController {
         Response response = new Response();
         orderBiz.cancelOrder(requireAccountid(), request, response);
         return response;
+    }
+
+    @RequestMapping(value = "/pay", method = RequestMethod.GET)
+    public void payOrder(PayOrderRequest request, HttpServletResponse httpResponse) throws Exception {
+        PayOrderByAlipayResponse response = new PayOrderByAlipayResponse();
+        try {
+            orderBiz.payOrder(requireAccountid(), request, response);
+            httpResponse.setHeader("Content-Type", "text/html;charset=UTF-8");
+            httpResponse.getWriter().write(response.getAlipayFrom());
+        } catch (Exception e) {
+            LOG.error("pay order failed, reqid: " + request.getReqid(), e);
+            httpResponse.sendRedirect(WebConfig.REDIRECT_FAILED);
+        }
     }
 
     @ResponseBody

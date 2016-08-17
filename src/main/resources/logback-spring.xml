@@ -26,21 +26,21 @@
 	</appender>
 
 	<appender name="RABBIT_INVOKE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${INVOKE_FILE}.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${INVOKE_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>12</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-            <charset>utf-8</charset>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-    </appender>
+		<file>${INVOKE_FILE}.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${INVOKE_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>12</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+			<charset>utf-8</charset>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>INFO</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+	</appender>
 
 	<appender name="RABBIT_INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<file>${INFO_FILE}.log</file>
@@ -74,11 +74,11 @@
 		</filter>
 	</appender>
 
-	<logger name="com.buterfleoge.whale.AccessLogger" level="INFO" additivity="false">
+	<logger name="com.buterfleoge.whale.log.AccessLogger" level="INFO" additivity="false">
 		<appender-ref ref="RABBIT_ACCESS_FILE" />
 	</logger>
 	
-	<logger name="com.buterfleoge.whale.InvokeLogger" level="INFO" additivity="false">
+	<logger name="com.buterfleoge.whale.log.InvokeLogger" level="INFO" additivity="false">
         <appender-ref ref="RABBIT_INVOKE_FILE" />
     </logger>
 

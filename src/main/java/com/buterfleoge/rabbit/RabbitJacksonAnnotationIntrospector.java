@@ -14,7 +14,9 @@ import org.springframework.format.Printer;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.NumberFormat;
 import org.springframework.format.datetime.DateTimeFormatAnnotationFormatterFactory;
+import org.springframework.format.number.CurrencyStyleFormatter;
 import org.springframework.format.number.NumberFormatAnnotationFormatterFactory;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -67,6 +69,9 @@ public class RabbitJacksonAnnotationIntrospector extends JacksonAnnotationIntros
         if (numberFormat != null) {
             NumberFormatAnnotationFormatterFactory factory = new NumberFormatAnnotationFormatterFactory();
             Printer<Number> printer = factory.getPrinter(numberFormat, BigDecimal.class);
+            if (ClassUtils.isAssignableValue(CurrencyStyleFormatter.class, printer)) {
+                ((CurrencyStyleFormatter) printer).setFractionDigits(0);
+            }
             return new RabbitSerializer<Number>(printer);
         }
 
@@ -94,6 +99,9 @@ public class RabbitJacksonAnnotationIntrospector extends JacksonAnnotationIntros
         if (numberFormat != null) {
             NumberFormatAnnotationFormatterFactory factory = new NumberFormatAnnotationFormatterFactory();
             Parser<Number> parser = factory.getParser(numberFormat, Number.class);
+            if (ClassUtils.isAssignableValue(CurrencyStyleFormatter.class, parser)) {
+                ((CurrencyStyleFormatter) parser).setFractionDigits(0);
+            }
             return new RabbitDerializer<Number>(parser);
         }
         return super.findDeserializer(a);
