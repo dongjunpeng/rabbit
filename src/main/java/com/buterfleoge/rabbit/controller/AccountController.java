@@ -10,11 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.biz.account.AccountBiz;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.type.protocol.Request;
@@ -104,7 +106,9 @@ public class AccountController extends RabbitController {
                 response.addCookie(cookie);
             }
         }
-        return "redirect:" + request.getHeader("Referer");
+        String referer = request.getHeader("Referer");
+        return StringUtils.isEmpty(referer) || referer.startsWith(WebConfig.ACCOUNT_HOME_URL_PREFIX)
+                || referer.startsWith(WebConfig.ORDER_URL_PREFIX) ? "redirect:/" : "redirect:" + referer;
     }
 
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)
