@@ -6,6 +6,7 @@ import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.buterfleoge.whale.Constants.SessionKey;
+import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 
 /**
@@ -20,6 +21,10 @@ public abstract class RabbitController {
 
     protected HttpSession getHttpSession() {
         return httpServletRequest.getSession();
+    }
+
+    protected HttpSession requireHttpSession() {
+        return httpServletRequest.getSession(true);
     }
 
     protected AccountBasicInfo getAccountBasicInfo() {
@@ -38,6 +43,12 @@ public abstract class RabbitController {
     protected Long requireAccountid() {
         AccountBasicInfo accountBasicInfo = requireAccountBasicInfo();
         return accountBasicInfo.getAccountInfo().getAccountid();
+    }
+
+    protected void addBasicInfoToSession(AccountInfo info) {
+        AccountBasicInfo basicInfo = new AccountBasicInfo();
+        basicInfo.setAccountInfo(info);
+        requireHttpSession().setAttribute(SessionKey.ACCOUNT_BASIC_INFO, basicInfo);
     }
 
 }
