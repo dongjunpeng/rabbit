@@ -1,6 +1,7 @@
 package com.buterfleoge.rabbit.controller;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,10 +14,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buterfleoge.rabbit.WebConfig;
-import com.buterfleoge.whale.Constants.Status;
+import com.buterfleoge.whale.biz.order.CreateOrderBiz;
 import com.buterfleoge.whale.biz.order.OrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
-import com.buterfleoge.whale.type.OrderStatusCategory;
 import com.buterfleoge.whale.type.entity.OrderInfo;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
@@ -55,32 +55,24 @@ public class OrderController extends RabbitController {
     private OrderBiz orderBiz;
 
     @Autowired
+    private CreateOrderBiz createOrderBiz;
+
+    @Autowired
     private OrderInfoRepository orderInfoRepository;
 
     @ResponseBody
     @RequestMapping(value = "/new", method = RequestMethod.POST)
-    public NewOrderResponse newOrder(NewOrderRequest request) throws Exception {
+    public NewOrderResponse newOrder(@Valid NewOrderRequest request) throws Exception {
         NewOrderResponse response = new NewOrderResponse();
-        try {
-            OrderInfo orderInfo = orderInfoRepository.findByAccountidAndRouteidAndGroupidAndStatusIn(requireAccountid(),
-                    request.getRouteid(), request.getGroupid(), OrderStatusCategory.NO_ALLOW_NEW.getOrderStatuses());
-            if (orderInfo != null) {
-                response.setOrderid(orderInfo.getOrderid());
-            } else {
-                orderBiz.newOrder(requireAccountid(), request, response);
-            }
-        } catch (Exception e) {
-            LOG.error("find order info failed, reqid: " + request.getReqid(), e);
-            response.setStatus(Status.DB_ERROR);
-        }
+        createOrderBiz.newOrder(requireAccountid(), request, response);
         return response;
     }
 
     @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.POST)
-    public Response createOrder(@RequestBody CreateOrderRequest request) throws Exception {
+    public Response createOrder(@RequestBody @Valid CreateOrderRequest request) throws Exception {
         CreateOrderResponse response = new CreateOrderResponse();
-        orderBiz.createOrder(requireAccountid(), request, response);
+        createOrderBiz.createOrder(requireAccountid(), request, response);
         return response;
     }
 

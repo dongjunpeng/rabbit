@@ -4,10 +4,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 
 import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
+import com.buterfleoge.whale.validator.Validators;
 
 /**
  *
@@ -18,6 +21,14 @@ public abstract class RabbitController {
 
     @Autowired
     private HttpServletRequest httpServletRequest;
+
+    @Autowired
+    private Validators validators;
+
+    @InitBinder
+    protected void initBinder(WebDataBinder binder) {
+        binder.addValidators(validators);
+    }
 
     protected HttpSession getHttpSession() {
         return httpServletRequest.getSession();
