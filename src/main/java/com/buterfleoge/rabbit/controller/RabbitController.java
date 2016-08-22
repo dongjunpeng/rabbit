@@ -4,11 +4,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 
 import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 import com.buterfleoge.whale.validator.Validators;
 
@@ -25,9 +28,27 @@ public abstract class RabbitController {
     @Autowired
     private Validators validators;
 
+    private Validator accountidSetter = new Validator() {
+
+        @Override
+        public boolean supports(Class<?> clazz) {
+            return true;
+        }
+
+        @Override
+        public void validate(Object target, Errors errors) {
+            if (Request.class.isInstance(target)) {
+                ((Request) target).setAccountid(requireAccountid());
+            }
+        }
+    };
+
     @InitBinder
     protected void initBinder(WebDataBinder binder) {
-        binder.addValidators(validators);
+        Validators validatorsWrapper = new Validators();
+        validatorsWrapper.getValidators().add(accountidSetter);
+        validatorsWrapper.getValidators().addAll(validators.getValidators());
+        binder.addValidators(validatorsWrapper);
     }
 
     protected HttpSession getHttpSession() {
