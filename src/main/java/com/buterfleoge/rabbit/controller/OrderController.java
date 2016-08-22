@@ -1,6 +1,7 @@
 package com.buterfleoge.rabbit.controller;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,28 +14,29 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buterfleoge.rabbit.WebConfig;
-import com.buterfleoge.whale.Constants.Status;
+import com.buterfleoge.whale.biz.order.CancelOrderBiz;
+import com.buterfleoge.whale.biz.order.CreateOrderBiz;
 import com.buterfleoge.whale.biz.order.OrderBiz;
+import com.buterfleoge.whale.biz.order.OrderDiscountBiz;
+import com.buterfleoge.whale.biz.order.PayOrderBiz;
+import com.buterfleoge.whale.biz.order.RefundOrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
-import com.buterfleoge.whale.type.OrderStatusCategory;
 import com.buterfleoge.whale.type.entity.OrderInfo;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
-import com.buterfleoge.whale.type.protocol.order.CancelOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.CreateOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.CreateOrderResponse;
 import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersResponse;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
-import com.buterfleoge.whale.type.protocol.order.GetOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.GetOrderResponse;
 import com.buterfleoge.whale.type.protocol.order.NewOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.NewOrderResponse;
+import com.buterfleoge.whale.type.protocol.order.OrderRequest;
 import com.buterfleoge.whale.type.protocol.order.PayOrderByAlipayResponse;
 import com.buterfleoge.whale.type.protocol.order.PayOrderRequest;
-import com.buterfleoge.whale.type.protocol.order.RefoundRequest;
-import com.buterfleoge.whale.type.protocol.order.RefoundResponse;
+import com.buterfleoge.whale.type.protocol.order.RefundResponse;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
 
@@ -55,48 +57,60 @@ public class OrderController extends RabbitController {
     private OrderBiz orderBiz;
 
     @Autowired
+    private CreateOrderBiz createOrderBiz;
+
+    @Autowired
+    private CancelOrderBiz cancelOrderBiz;
+
+    @Autowired
+    private PayOrderBiz payOrderBiz;
+
+    @Autowired
+    private RefundOrderBiz refundOrderBiz;
+
+    @Autowired
+    private OrderDiscountBiz orderDiscountBiz;
+
+    @Autowired
     private OrderInfoRepository orderInfoRepository;
 
     @ResponseBody
     @RequestMapping(value = "/new", method = RequestMethod.POST)
-    public NewOrderResponse newOrder(NewOrderRequest request) throws Exception {
+    public NewOrderResponse newOrder(@Valid NewOrderRequest request) throws Exception {
         NewOrderResponse response = new NewOrderResponse();
-        try {
-            OrderInfo orderInfo = orderInfoRepository.findByAccountidAndRouteidAndGroupidAndStatusIn(requireAccountid(),
-                    request.getRouteid(), request.getGroupid(), OrderStatusCategory.NO_ALLOW_NEW.getOrderStatuses());
-            if (orderInfo != null) {
-                response.setOrderid(orderInfo.getOrderid());
-            } else {
-                orderBiz.newOrder(requireAccountid(), request, response);
-            }
-        } catch (Exception e) {
-            LOG.error("find order info failed, reqid: " + request.getReqid(), e);
-            response.setStatus(Status.DB_ERROR);
-        }
+        createOrderBiz.newOrder(requireAccountid(), request, response);
         return response;
     }
 
     @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.POST)
-    public Response createOrder(@RequestBody CreateOrderRequest request) throws Exception {
+    public Response createOrder(@RequestBody @Valid CreateOrderRequest request) throws Exception {
         CreateOrderResponse response = new CreateOrderResponse();
-        orderBiz.createOrder(requireAccountid(), request, response);
+        createOrderBiz.createOrder(requireAccountid(), request, response);
         return response;
     }
 
     @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.GET)
-    public GetOrderResponse getOrder(GetOrderRequest request) throws Exception {
+    public GetOrderResponse getOrder(OrderRequest request) throws Exception {
         GetOrderResponse response = new GetOrderResponse();
         orderBiz.getOrder(requireAccountid(), request, response);
         return response;
     }
 
     @ResponseBody
+    @RequestMapping(value = "/brief", method = RequestMethod.GET)
+    public GetBriefOrdersResponse getBriefOrder(GetBriefOrdersRequest request) throws Exception {
+        GetBriefOrdersResponse response = new GetBriefOrdersResponse();
+        orderBiz.getBriefOrders(requireAccountid(), request, response);
+        return response;
+    }
+
+    @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.DELETE)
-    public Response cancelOrder(CancelOrderRequest request) throws Exception {
+    public Response cancelOrder(OrderRequest request) throws Exception {
         Response response = new Response();
-        orderBiz.cancelOrder(requireAccountid(), request, response);
+        cancelOrderBiz.cancelOrder(requireAccountid(), request, response);
         return response;
     }
 
@@ -104,7 +118,7 @@ public class OrderController extends RabbitController {
     public void payOrder(PayOrderRequest request, HttpServletResponse httpResponse) throws Exception {
         PayOrderByAlipayResponse response = new PayOrderByAlipayResponse();
         try {
-            orderBiz.payOrder(requireAccountid(), request, response);
+            payOrderBiz.payOrder(requireAccountid(), request, response);
             httpResponse.setHeader("Content-Type", "text/html;charset=UTF-8");
             httpResponse.getWriter().write(response.getAlipayFrom());
         } catch (Exception e) {
@@ -114,18 +128,10 @@ public class OrderController extends RabbitController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/brief", method = RequestMethod.GET)
-    public GetBriefOrdersResponse getRoute(GetBriefOrdersRequest request) throws Exception {
-        GetBriefOrdersResponse response = new GetBriefOrdersResponse();
-        orderBiz.getBriefOrders(requireAccountid(), request, response);
-        return response;
-    }
-
-    @ResponseBody
-    @RequestMapping(value = "/refound", method = RequestMethod.GET)
-    public RefoundResponse getRefoundInfo(RefoundRequest request) throws Exception {
-        RefoundResponse response = new RefoundResponse();
-        orderBiz.getRefoundInfo(requireAccountid(), request, response);
+    @RequestMapping(value = "/refund", method = RequestMethod.GET)
+    public RefundResponse getRefoundInfo(OrderRequest request) throws Exception {
+        RefundResponse response = new RefundResponse();
+        refundOrderBiz.getRefundInfo(requireAccountid(), request, response);
         return response;
     }
 
@@ -133,7 +139,7 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/discount", method = RequestMethod.GET)
     public GetDiscountResponse getDiscount(GetDiscountRequest request) throws Exception {
         GetDiscountResponse response = new GetDiscountResponse();
-        orderBiz.getDiscount(requireAccountid(), request, response);
+        orderDiscountBiz.getDiscount(requireAccountid(), request, response);
         return response;
     }
 
@@ -141,7 +147,7 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/discountcode", method = RequestMethod.GET)
     public ValidateCodeResponse validateDiscountCode(ValidateCodeRequest request) throws Exception {
         ValidateCodeResponse response = new ValidateCodeResponse();
-        orderBiz.validateDiscountCode(requireAccountid(), request, response);
+        orderDiscountBiz.validateDiscountCode(requireAccountid(), request, response);
         return response;
     }
 

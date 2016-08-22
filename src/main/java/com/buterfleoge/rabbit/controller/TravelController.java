@@ -1,7 +1,9 @@
 /**
- * 
+ *
  */
 package com.buterfleoge.rabbit.controller;
+
+import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,15 +23,15 @@ import com.buterfleoge.whale.type.protocol.travel.GetRouteRequest;
 import com.buterfleoge.whale.type.protocol.travel.GetRouteResponse;
 
 /**
- * 
+ *
  * 路线发团相关处理
- * 
+ *
  * @author Brent24
  *
  */
 @Controller
 @RequestMapping("/travel")
-public class TravelController {
+public class TravelController extends RabbitController {
 
     private static final Logger LOG = LoggerFactory.getLogger(TravelController.class);
 
@@ -49,7 +51,7 @@ public class TravelController {
 
     @ResponseBody
     @RequestMapping(value = "/group", method = RequestMethod.GET)
-    public GetGroupResponse getGroup(GetGroupRequest request) throws Exception {
+    public GetGroupResponse getGroup(@Valid GetGroupRequest request) throws Exception {
         GetGroupResponse response = new GetGroupResponse();
         travelBiz.getGroups(request, response);
         return response;

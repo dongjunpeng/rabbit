@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpSession;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -28,11 +27,7 @@ import com.buterfleoge.rabbit.interceptor.RabbitWebContextInterceptor;
 import com.buterfleoge.rabbit.interceptor.WxLoginInterceptor;
 import com.buterfleoge.whale.Constants.CacheKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
-import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.Constants.Status;
-import com.buterfleoge.whale.type.entity.AccountInfo;
-import com.buterfleoge.whale.type.entity.AccountSetting;
-import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -48,10 +43,11 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     public static final String ACCOUNT_HOME_URL_PREFIX = "/account";
     public static final String ORDER_URL_PREFIX = "/order";
+    public static final String LOGIN_URL = "/login";
     public static final String WX_LOGIN_URL = "/wx/login";
-    public static final String REDIRECT_NOTAUTH = "redirect:notauth";
+    public static final String REDIRECT_NOTAUTH = "redirect:/notauth";
     public static final String REDIRECT_WXFAILED = "redirect:/wx/failed";
-    public static final String REDIRECT_FAILED = "redirect:systemerror";
+    public static final String REDIRECT_FAILED = "redirect:/systemerror";
 
     private static final Map<String, String> viewMap = new HashMap<String, String>();
 
@@ -59,6 +55,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         viewMap.put("/", "forward:/index.html");
         viewMap.put("/routes", "forward:/routes.html");
         viewMap.put("/activities", "forward:/activities.html");
+        viewMap.put(LOGIN_URL, "forward:/login.html");
     }
 
     private static final Map<String, Integer> FAILED_PATH_STATUS_MAP = new HashMap<String, Integer>();
@@ -137,11 +134,11 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         return null;
     }
 
-    public static void addBasicInfoToSession(AccountInfo info, AccountSetting setting, HttpSession session) {
-        AccountBasicInfo basicInfo = new AccountBasicInfo();
-        basicInfo.setAccountInfo(info);
-        basicInfo.setAccountSetting(setting);
-        session.setAttribute(SessionKey.ACCOUNT_BASIC_INFO, basicInfo);
+    public static Cookie createCookie(String name, String value) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setPath("/");
+        cookie.setMaxAge(DefaultValue.COOKIE_EXPIRY);
+        return cookie;
     }
 
     public static String createToken(Long accountid) {
@@ -167,7 +164,4 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         return CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid;
     }
 
-    public static String getWxLoginStateKey(String state) {
-        return CacheKey.WX_LOGIN_STATE_PREFIX + DefaultValue.SEPARATOR + state;
-    }
 }

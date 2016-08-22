@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.biz.account.AccountBiz;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
-import com.buterfleoge.whale.dao.AccountSettingRepository;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.account.DeleteContactsRequest;
@@ -28,7 +28,6 @@ import com.buterfleoge.whale.type.protocol.account.GetContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.GetContactsResponse;
 import com.buterfleoge.whale.type.protocol.account.PostBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
-import com.buterfleoge.whale.type.protocol.account.PostContactsResponse;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 
 /**
@@ -49,20 +48,15 @@ public class AccountController extends RabbitController {
     @Autowired
     private AccountInfoRepository accountInfoRepository;
 
-    @Autowired
-    private AccountSettingRepository accountSettingRepository;
-
     @ResponseBody
     @RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
     public GetBasicInfoResponse getBasicInfo(GetBasicInfoRequest request, HttpServletRequest httpServletRequest)
             throws Exception {
         GetBasicInfoResponse response = new GetBasicInfoResponse();
         AccountBasicInfo basicInfo = getAccountBasicInfo();
-        if (basicInfo == null) {
-            return response;
+        if (basicInfo != null) {
+            response.setAccountBasicInfo(basicInfo);
         }
-        response.setAccountInfo(basicInfo.getAccountInfo());
-        response.setAccountSetting(basicInfo.getAccountSetting());
         return response;
     }
 
@@ -72,12 +66,7 @@ public class AccountController extends RabbitController {
         Long accountid = requireAccountid();
         Response response = new Response();
         accountBiz.updateBasicInfo(accountid, request, response);
-        try {
-            WebConfig.addBasicInfoToSession(accountInfoRepository.findOne(accountid),
-                    accountSettingRepository.findOne(accountid), getHttpSession());
-        } catch (Exception e) {
-            LOG.error("find account info setting failed, reqid: " + request.getReqid(), e);
-        }
+        addBasicInfoToSession(accountInfoRepository.findOne(accountid));
         return response;
     }
 
@@ -92,7 +81,7 @@ public class AccountController extends RabbitController {
     @ResponseBody
     @RequestMapping(value = "/contacts", method = RequestMethod.POST)
     public Response postContacts(PostContactsRequest request) throws Exception {
-        PostContactsResponse response = new PostContactsResponse();
+        Response response = new Response();
         accountBiz.postContacts(requireAccountid(), request, response);
         return response;
     }
@@ -117,7 +106,9 @@ public class AccountController extends RabbitController {
                 response.addCookie(cookie);
             }
         }
-        return "redirect:/";
+        String referer = request.getHeader("Referer");
+        return StringUtils.isEmpty(referer) || referer.startsWith(WebConfig.ACCOUNT_HOME_URL_PREFIX)
+                || referer.startsWith(WebConfig.ORDER_URL_PREFIX) ? "redirect:/" : "redirect:" + referer;
     }
 
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)
