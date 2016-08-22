@@ -38,7 +38,7 @@ public abstract class RabbitController {
         @Override
         public void validate(Object target, Errors errors) {
             if (Request.class.isInstance(target)) {
-                ((Request) target).setAccountid(requireAccountid());
+                ((Request) target).setAccountid(getAccountid());
             }
         }
     };
@@ -70,6 +70,11 @@ public abstract class RabbitController {
             throw new IllegalStateException("No account basic info in session");
         }
         return accountBasicInfo;
+    }
+
+    protected Long getAccountid() {
+        AccountBasicInfo accountBasicInfo = getAccountBasicInfo();
+        return accountBasicInfo != null ? accountBasicInfo.getAccountInfo().getAccountid() : null;
     }
 
     protected Long requireAccountid() {
