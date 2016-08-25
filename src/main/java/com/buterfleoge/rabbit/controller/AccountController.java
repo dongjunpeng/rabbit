@@ -22,7 +22,6 @@ import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.account.DeleteContactsRequest;
-import com.buterfleoge.whale.type.protocol.account.GetBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.GetBasicInfoResponse;
 import com.buterfleoge.whale.type.protocol.account.GetContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.GetContactsResponse;
@@ -50,7 +49,7 @@ public class AccountController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
-    public GetBasicInfoResponse getBasicInfo(GetBasicInfoRequest request, HttpServletRequest httpServletRequest)
+    public GetBasicInfoResponse getBasicInfo(Request request, HttpServletRequest httpServletRequest)
             throws Exception {
         GetBasicInfoResponse response = new GetBasicInfoResponse();
         AccountBasicInfo basicInfo = getAccountBasicInfo();
@@ -113,16 +112,6 @@ public class AccountController extends RabbitController {
 
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)
     public String getAccountPage(@PathVariable Long accountid, Request request) throws Exception {
-        if (requireAccountid().equals(accountid)) {
-            return "account";
-        } else {
-            LOG.warn("No auth for get homepage of accountid: " + accountid + ", reqid: " + request.getReqid());
-            return "redirect:notauth";
-        }
-    }
-
-    @RequestMapping(value = "/{accountid}/*", method = RequestMethod.GET)
-    public String getSubAccountPage(@PathVariable Long accountid, Request request) throws Exception {
         if (requireAccountid().equals(accountid)) {
             return "account";
         } else {

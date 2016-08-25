@@ -17,12 +17,12 @@ import com.buterfleoge.whale.dao.AccountBindingRepository;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.exception.WeixinException;
 import com.buterfleoge.whale.service.WeixinWebService;
+import com.buterfleoge.whale.service.weixin.protocol.WxAccessTokenResponse;
+import com.buterfleoge.whale.service.weixin.protocol.WxUserinfoResponse;
 import com.buterfleoge.whale.type.AccountStatus;
 import com.buterfleoge.whale.type.IdType;
 import com.buterfleoge.whale.type.entity.AccountBinding;
 import com.buterfleoge.whale.type.entity.AccountInfo;
-import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
-import com.buterfleoge.whale.type.protocol.wx.WxUserinfoResponse;
 
 /**
  *

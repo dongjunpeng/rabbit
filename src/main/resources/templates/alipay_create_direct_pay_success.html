@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>支付结果 -- 海逍遥带您旅行</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<meta name="renderer" content="webkit">
+<link rel="stylesheet"
+    href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet"
+    href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+<style>
+#app {
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+}
+.count-down {
+    color: #FF6100;
+    font-size: 26px;
+    font-weight: bolder;
+    font-style: italic;
+}
+</style>
+</head>
+<body>
+    <div id="app"></div>
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog"
+        aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" onclick="onClosed()"
+                        data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                    支付成功
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p><span class="count-down">5</span>秒后自动回到订单页面。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" onclick="onClosed()"
+                        data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.bootcss.com/jquery/1.12.0/jquery.min.js"></script>
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script>
+    $('#myModal').modal();
+    function onClosed() {
+        try{self.opener.location.reload();}catch(e){}self.close();
+    }
+    var countDownJ = $(".count-down");
+    var second = 5;
+    var timer = setInterval(function() {
+        if (second <=0 ) {
+            onClosed();
+        }
+        countDownJ.text(second);
+        second --;
+    }, 1000);
+                </script>
+</body>
+</html>

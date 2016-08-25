@@ -1,5 +1,6 @@
 package com.buterfleoge.rabbit.controller;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
@@ -12,8 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
 
 import com.buterfleoge.rabbit.WebConfig;
+import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.order.CancelOrderBiz;
 import com.buterfleoge.whale.biz.order.CreateOrderBiz;
 import com.buterfleoge.whale.biz.order.OrderBiz;
@@ -21,11 +24,13 @@ import com.buterfleoge.whale.biz.order.OrderDiscountBiz;
 import com.buterfleoge.whale.biz.order.PayOrderBiz;
 import com.buterfleoge.whale.biz.order.RefundOrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
+import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateNotifyRequest;
+import com.buterfleoge.whale.service.alipay.protocol.AlipayReturnRequest;
 import com.buterfleoge.whale.type.entity.OrderInfo;
+import com.buterfleoge.whale.type.protocol.Error;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.order.CreateOrderRequest;
-import com.buterfleoge.whale.type.protocol.order.CreateOrderResponse;
 import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersResponse;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
@@ -85,7 +90,7 @@ public class OrderController extends RabbitController {
     @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.POST)
     public Response createOrder(@RequestBody @Valid CreateOrderRequest request) throws Exception {
-        CreateOrderResponse response = new CreateOrderResponse();
+        Response response = new Response();
         createOrderBiz.createOrder(requireAccountid(), request, response);
         return response;
     }
@@ -124,6 +129,47 @@ public class OrderController extends RabbitController {
         } catch (Exception e) {
             LOG.error("pay order failed, reqid: " + request.getReqid(), e);
             httpResponse.sendRedirect(WebConfig.REDIRECT_FAILED);
+        }
+    }
+
+    @RequestMapping(value = "/alipay/return", method = RequestMethod.GET)
+    public ModelAndView alipayReturn(AlipayReturnRequest request, HttpServletRequest httpRequest) throws Exception {
+        ModelAndView modelAndView;
+        Response response = new Response();
+        try {
+            payOrderBiz.handlePayReturn(requireAccountid(), httpRequest.getParameterMap(), request, response);
+            if (response.hasError()) {
+                modelAndView = new ModelAndView("alipay_create_direct_pay_failed");
+            } else {
+                modelAndView = new ModelAndView("alipay_create_direct_pay_success");
+            }
+        } catch (Exception e) {
+            LOG.error("handle alipay return failed, reqid: " + request.getReqid(), e);
+            response.setStatus(Status.SYSTEM_ERROR);
+            response.addError(new Error(e.getMessage()));
+            modelAndView = new ModelAndView("alipay_create_direct_pay_failed");
+        }
+        modelAndView.addObject("orderid", request.getOut_trade_no());
+        if (response.hasError()) {
+            modelAndView.addObject("errMsg", response.getErrors().get(0).getMessage());
+        }
+        return modelAndView;
+    }
+
+    @RequestMapping(value = "/alipay/notify", method = RequestMethod.POST)
+    public void alipayNotify(AlipayCreateNotifyRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse)
+            throws Exception {
+        Response response = new Response();
+        try {
+            payOrderBiz.handlePayNotify(requireAccountid(), httpRequest.getParameterMap(), request, response);
+            if (response.hasError()) {
+                httpResponse.getWriter().write("failed");
+            } else {
+                httpResponse.getWriter().write("success");
+            }
+        } catch (Exception e) {
+            LOG.error("pay order failed, reqid: " + request.getReqid(), e);
+            httpResponse.sendRedirect("failed");
         }
     }
 

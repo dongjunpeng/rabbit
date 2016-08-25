@@ -10,8 +10,8 @@ import org.springframework.data.redis.core.ValueOperations;
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.service.WeixinWebService;
+import com.buterfleoge.whale.service.weixin.protocol.WxAccessTokenResponse;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
-import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 
 /**
  *
