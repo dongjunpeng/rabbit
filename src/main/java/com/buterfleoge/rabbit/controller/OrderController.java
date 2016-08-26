@@ -41,7 +41,7 @@ import com.buterfleoge.whale.type.protocol.order.NewOrderResponse;
 import com.buterfleoge.whale.type.protocol.order.OrderRequest;
 import com.buterfleoge.whale.type.protocol.order.PayOrderByAlipayResponse;
 import com.buterfleoge.whale.type.protocol.order.PayOrderRequest;
-import com.buterfleoge.whale.type.protocol.order.RefundResponse;
+import com.buterfleoge.whale.type.protocol.order.RefundOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
 
@@ -174,9 +174,9 @@ public class OrderController extends RabbitController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/refund", method = RequestMethod.GET)
-    public RefundResponse getRefoundInfo(OrderRequest request) throws Exception {
-        RefundResponse response = new RefundResponse();
+    @RequestMapping(value = "/refund", method = RequestMethod.POST)
+    public Response getRefoundInfo(RefundOrderRequest request) throws Exception {
+        Response response = new Response();
         refundOrderBiz.getRefundInfo(requireAccountid(), request, response);
         return response;
     }
