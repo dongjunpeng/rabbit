@@ -9,9 +9,9 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.SessionKey;
-import com.buterfleoge.whale.biz.account.WxBiz;
+import com.buterfleoge.whale.service.WeixinWebService;
+import com.buterfleoge.whale.service.weixin.protocol.WxAccessTokenResponse;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
-import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 
 /**
  *
@@ -21,7 +21,7 @@ import com.buterfleoge.whale.type.protocol.wx.WxAccessTokenResponse;
 public abstract class AuthInterceptor extends RabbitInterceptor {
 
     @Autowired
-    private WxBiz wxBiz;
+    private WeixinWebService weixinWebService;
 
     @Resource(name = "cacheTemplate")
     private ValueOperations<String, Object> operations;
@@ -33,7 +33,8 @@ public abstract class AuthInterceptor extends RabbitInterceptor {
             Long accountid = basicInfo.getAccountInfo().getAccountid();
             String accountTokenCacheKey = WebConfig.getAccessTokenKey(accountid);
             WxAccessTokenResponse accessToken = getAccessTokenFromCache(accountTokenCacheKey);
-            if (accessToken != null && wxBiz.isAccessTokenValid(accessToken.getAccess_token(), accessToken.getOpenid())) {
+            if (accessToken != null
+                    && weixinWebService.isAccessTokenValid(accessToken.getAccess_token(), accessToken.getOpenid())) {
                 if (refreshToken(accessToken.getRefresh_token(), accountTokenCacheKey)) {
                     return hasAccountBasicInfo(request, response, accountid);
                 }
@@ -58,13 +59,13 @@ public abstract class AuthInterceptor extends RabbitInterceptor {
 
     private boolean refreshToken(String refreshToken, String accountTokenCacheKey) {
         try {
-            WxAccessTokenResponse accessToken = wxBiz.refreshToken(refreshToken);
-            if (accessToken == null || accessToken.getErrcode() != null) {
-                throw new Exception(accessToken.getErrmsg());
-            } else {
+            WxAccessTokenResponse accessToken = weixinWebService.refreshToken(refreshToken);
+            if (accessToken != null && accessToken.getErrcode() == null) {
                 operations.set(accountTokenCacheKey, accessToken); // 用refreshToken来更新accessToken
+                return true;
+            } else {
+                return false;
             }
-            return true;
         } catch (Exception e) {
             LOG.error("refresh token failed, refreshToken: " + refreshToken + ", accountTokenKey: " + accountTokenCacheKey, e);
             return false;

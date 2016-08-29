@@ -12,10 +12,11 @@ import org.springframework.util.ClassUtils;
 
 import com.buterfleoge.rabbit.RabbitWebContext;
 import com.buterfleoge.rabbit.WebConfig;
-import com.buterfleoge.whale.AccessLogger;
 import com.buterfleoge.whale.Constants;
 import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.Utils;
+import com.buterfleoge.whale.log.AccessLogger;
+import com.buterfleoge.whale.type.protocol.Error;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 
@@ -65,7 +66,9 @@ public class ControllerAspect {
             MethodSignature signature = (MethodSignature) pjp.getSignature();
             Class<?> returnType = signature.getMethod().getReturnType();
             if (ClassUtils.isAssignable(Response.class, returnType)) {
-                response = new Response(Status.SYSTEM_ERROR);
+                Response r = new Response(Status.SYSTEM_ERROR);
+                r.addError(new Error("系统异常, 请稍后重试或者联系客服： 18510248672"));
+                response = r;
             } else if (ClassUtils.isAssignable(String.class, returnType)) {
                 response = WebConfig.REDIRECT_FAILED;
             }
@@ -88,10 +91,13 @@ public class ControllerAspect {
     }
 
     private String createReqid() {
-        StringBuilder builder = new StringBuilder("[path=").append(RabbitWebContext.getRequestURI()).append("][remote=")
-                .append(RabbitWebContext.getRemoteIp()).append("][local=").append(Constants.LOCAL)
-                .append("][starttime=").append(RabbitWebContext.getStartTime()).append("][random=")
-                .append(Math.random()).append("]");
+        // @formatter:off
+        StringBuilder builder = new StringBuilder("[path=").append(RabbitWebContext.getRequestURI())
+                .append("][remote=").append(RabbitWebContext.getRemoteIp())
+                .append("][local=").append(Constants.LOCAL)
+                .append("][starttime=").append(RabbitWebContext.getStartTime())
+                .append("][random=").append(Math.random()).append("]");
+        // @formatter:on
         return Utils.stringMD5(builder.toString());
     }
 
