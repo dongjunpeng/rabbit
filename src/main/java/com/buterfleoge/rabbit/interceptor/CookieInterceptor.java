@@ -3,6 +3,7 @@ package com.buterfleoge.rabbit.interceptor;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -11,9 +12,8 @@ import com.buterfleoge.whale.AesEncryption;
 import com.buterfleoge.whale.Constants.CookieKey;
 import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
-import com.buterfleoge.whale.dao.AccountSettingRepository;
 import com.buterfleoge.whale.type.entity.AccountInfo;
-import com.buterfleoge.whale.type.entity.AccountSetting;
+import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 
 /**
  *
@@ -24,9 +24,6 @@ public class CookieInterceptor extends RabbitInterceptor {
 
     @Autowired
     private AccountInfoRepository accountInfoRepository;
-
-    @Autowired
-    private AccountSettingRepository accountSettingRepository;
 
     @Autowired
     private AesEncryption aesEncryption;
@@ -43,12 +40,12 @@ public class CookieInterceptor extends RabbitInterceptor {
             Cookie[] cookies = request.getCookies();
             Long accountid = getAccountidFromCookie(cookies);
             String token = getTokenFromCookies(cookies);
-            if (accountid != null && token != null && accountid.equals(WebConfig.getAccountidFromToken(token))) {
+            Long tokenAccountid = WebConfig.getAccountidFromToken(token);
+            if (accountid != null && accountid.equals(tokenAccountid)) {
                 try {
                     AccountInfo info = accountInfoRepository.findOne(accountid);
                     if (info != null) {
-                        AccountSetting setting = accountSettingRepository.findOne(accountid);
-                        WebConfig.addBasicInfoToSession(info, setting, request.getSession());
+                        addBasicInfoToSession(info, request.getSession());
                     } else {
                         LOG.error("accountid in cookie is invalid, accountid: " + accountid + ", token: " + token);
                     }
@@ -78,6 +75,12 @@ public class CookieInterceptor extends RabbitInterceptor {
             LOG.error("decrypt token failed, token: " + encryToken, e);
             return null;
         }
+    }
+
+    private void addBasicInfoToSession(AccountInfo info, HttpSession session) {
+        AccountBasicInfo basicInfo = new AccountBasicInfo();
+        basicInfo.setAccountInfo(info);
+        session.setAttribute(SessionKey.ACCOUNT_BASIC_INFO, basicInfo);
     }
 
 }

@@ -29,4 +29,4 @@ existIfError
 cd ../rabbit && mvn clean install
 existIfError
 
-rm -rf ${STATIC_PATH}
+#rm -rf ${STATIC_PATH}
