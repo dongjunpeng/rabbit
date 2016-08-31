@@ -126,6 +126,7 @@ public class OrderController extends RabbitController {
             payOrderBiz.payOrder(requireAccountid(), request, response);
             httpResponse.setHeader("Content-Type", "text/html;charset=UTF-8");
             httpResponse.getWriter().write(response.getAlipayFrom());
+            // System.out.println(response.getAlipayFrom());
         } catch (Exception e) {
             LOG.error("pay order failed, reqid: " + request.getReqid(), e);
             httpResponse.sendRedirect(WebConfig.REDIRECT_FAILED);
@@ -157,8 +158,8 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/alipay/notify", method = RequestMethod.POST)
-    public void alipayNotify(AlipayCreateNotifyRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse)
-            throws Exception {
+    public void alipayNotify(AlipayCreateNotifyRequest request, HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) throws Exception {
         Response response = new Response();
         try {
             payOrderBiz.handlePayNotify(requireAccountid(), httpRequest.getParameterMap(), request, response);
