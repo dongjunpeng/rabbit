@@ -28,7 +28,7 @@ public class LoginStateInterceptor extends AuthInterceptor {
 
     @Override
     protected boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        response.sendRedirect(WebConfig.LOGIN_URL);
+        response.sendRedirect(WebConfig.LOGIN_URL + "?redirect=" + request.getRequestURI());
         return false;
     }
 
