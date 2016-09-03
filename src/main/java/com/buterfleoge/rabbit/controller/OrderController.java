@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.multiaction.NoSuchRequestHandlingMethodException;
 
-import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.order.CancelOrderBiz;
 import com.buterfleoge.whale.biz.order.CreateOrderBiz;
@@ -122,14 +122,9 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/pay", method = RequestMethod.GET)
     public void payOrder(PayOrderRequest request, HttpServletResponse httpResponse) throws Exception {
         PayOrderByAlipayResponse response = new PayOrderByAlipayResponse();
-        try {
-            payOrderBiz.payOrder(requireAccountid(), request, response);
-            httpResponse.setHeader("Content-Type", "text/html;charset=UTF-8");
-            httpResponse.getWriter().write(response.getAlipayFrom());
-        } catch (Exception e) {
-            LOG.error("pay order failed, reqid: " + request.getReqid(), e);
-            httpResponse.sendRedirect(WebConfig.REDIRECT_FAILED);
-        }
+        payOrderBiz.payOrder(requireAccountid(), request, response);
+        httpResponse.setHeader("Content-Type", "text/html;charset=UTF-8");
+        httpResponse.getWriter().write(response.getAlipayFrom());
     }
 
     @RequestMapping(value = "/alipay/return", method = RequestMethod.GET)
@@ -169,7 +164,7 @@ public class OrderController extends RabbitController {
             }
         } catch (Exception e) {
             LOG.error("pay order failed, reqid: " + request.getReqid(), e);
-            httpResponse.sendRedirect("failed");
+            httpResponse.getWriter().write("failed");
         }
     }
 
@@ -198,10 +193,13 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/{orderid}", method = RequestMethod.GET)
-    public String getOrderPage(@PathVariable Long orderid, Request request) throws Exception {
+    public String getOrderPage(@PathVariable Long orderid, Request request, HttpServletRequest httpRequest) throws Exception {
         Long accountid = requireAccountid();
         OrderInfo orderInfo = orderInfoRepository.findByOrderidAndAccountid(orderid, accountid);
-        return orderInfo == null ? "redirect:/notfound" : "order";
+        if (orderInfo == null) { // 通过NoSuchRequestHandlingMethodException来引发404异常
+            throw new NoSuchRequestHandlingMethodException(httpRequest);
+        }
+        return "order";
     }
 
 }

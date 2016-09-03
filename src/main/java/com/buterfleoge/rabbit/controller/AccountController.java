@@ -116,7 +116,7 @@ public class AccountController extends RabbitController {
             return "account";
         } else {
             LOG.warn("No auth for get homepage of accountid: " + accountid + ", reqid: " + request.getReqid());
-            return "redirect:notauth";
+            return "redirect:" + WebConfig.NOTAUTH_URL;
         }
     }
 
