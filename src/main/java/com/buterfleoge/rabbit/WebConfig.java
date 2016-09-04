@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 import javax.servlet.http.Cookie;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
@@ -27,7 +27,6 @@ import com.buterfleoge.rabbit.interceptor.RabbitWebContextInterceptor;
 import com.buterfleoge.rabbit.interceptor.WxLoginInterceptor;
 import com.buterfleoge.whale.Constants.CacheKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
-import com.buterfleoge.whale.Constants.Status;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -45,25 +44,16 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     public static final String ORDER_URL_PREFIX = "/order";
     public static final String LOGIN_URL = "/login";
     public static final String WX_LOGIN_URL = "/wx/login";
-    public static final String REDIRECT_NOTAUTH = "redirect:/notauth";
-    public static final String REDIRECT_WXFAILED = "redirect:/wx/failed";
-    public static final String REDIRECT_FAILED = "redirect:/systemerror";
+    public static final String NOTAUTH_URL = "/notauth";
 
     private static final Map<String, String> viewMap = new HashMap<String, String>();
 
     static {
-        viewMap.put("/", "forward:/index.html");
-        viewMap.put("/routes", "forward:/routes.html");
-        viewMap.put("/activities", "forward:/activities.html");
-        viewMap.put(LOGIN_URL, "forward:/login.html");
-    }
-
-    private static final Map<String, Integer> FAILED_PATH_STATUS_MAP = new HashMap<String, Integer>();
-
-    static {
-        FAILED_PATH_STATUS_MAP.put(REDIRECT_NOTAUTH, Status.AUTH_ERROR);
-        FAILED_PATH_STATUS_MAP.put(REDIRECT_WXFAILED, Status.BIZ_ERROR);
-        FAILED_PATH_STATUS_MAP.put(REDIRECT_FAILED, Status.SYSTEM_ERROR);
+        viewMap.put("/", "/index.html");
+        viewMap.put("/routes", "/routes.html");
+        viewMap.put("/activities", "/activities.html");
+        viewMap.put(LOGIN_URL, "/login.html");
+        viewMap.put(NOTAUTH_URL, "/notauth.html");
     }
 
     @Value("${img.host.url}")
@@ -112,10 +102,6 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         registry.addInterceptor(getCookieInterceptor());
         registry.addInterceptor(getWxLoginInterceptor());
         registry.addInterceptor(getLoginStateInterceptor());
-    }
-
-    public static Integer getStatusByFailedPath(String path) {
-        return FAILED_PATH_STATUS_MAP.get(path);
     }
 
     public static String getAccountHomePage(Long accountid) {

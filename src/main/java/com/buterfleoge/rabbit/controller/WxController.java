@@ -38,7 +38,6 @@ public class WxController extends RabbitController implements InitializingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(WxController.class);
 
-    // FIXME：不需要整个页面刷新
     private static final String WX_LOGING_CALLBACK = "<!DOCTYPE html><html><head>"
             + "<script>try{self.opener.location.reload();}catch(e){}self.close();</script></head><body></body></html>";
 

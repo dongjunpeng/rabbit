@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 
 import com.buterfleoge.rabbit.RabbitWebContext;
-import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants;
 import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.Utils;
@@ -50,15 +49,8 @@ public class ControllerAspect {
         int status = Status.OK;
         try {
             response = pjp.proceed();
-            if (response != null) {
-                if (ClassUtils.isAssignableValue(Response.class, response)) {
-                    status = ((Response) response).getStatus();
-                } else if (ClassUtils.isAssignableValue(String.class, response)) {
-                    Integer temp = WebConfig.getStatusByFailedPath((String) response);
-                    if (temp != null) {
-                        status = temp;
-                    }
-                }
+            if (response != null && ClassUtils.isAssignableValue(Response.class, response)) {
+                status = ((Response) response).getStatus();
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -69,8 +61,8 @@ public class ControllerAspect {
                 Response r = new Response(Status.SYSTEM_ERROR);
                 r.addError(new Error("系统异常, 请稍后重试或者联系客服： 18510248672"));
                 response = r;
-            } else if (ClassUtils.isAssignable(String.class, returnType)) {
-                response = WebConfig.REDIRECT_FAILED;
+            } else {
+                throw e;
             }
         } finally {
             long startTime = RabbitWebContext.getStartTime();
