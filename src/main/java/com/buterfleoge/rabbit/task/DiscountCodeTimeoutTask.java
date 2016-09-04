@@ -20,12 +20,12 @@ import com.buterfleoge.whale.type.entity.DiscountCode;
 @Component
 public class DiscountCodeTimeoutTask {
 
-    private static final Set<DiscountCodeStatus> CODECHECK = new HashSet<DiscountCodeStatus>();
+    private static final Set<Integer> CODECHECK = new HashSet<Integer>();
 
     static {
         // 优惠码 创建和验证但未使用的
-        CODECHECK.add(DiscountCodeStatus.CREATED);
-        CODECHECK.add(DiscountCodeStatus.VERIFIED);
+        CODECHECK.add(DiscountCodeStatus.CREATED.value);
+        CODECHECK.add(DiscountCodeStatus.VERIFIED.value);
     }
 
     @Autowired
