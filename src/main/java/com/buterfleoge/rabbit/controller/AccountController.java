@@ -25,6 +25,7 @@ import com.buterfleoge.whale.type.protocol.account.DeleteContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.GetBasicInfoResponse;
 import com.buterfleoge.whale.type.protocol.account.GetContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.GetContactsResponse;
+import com.buterfleoge.whale.type.protocol.account.GetDiscountCodeResponse;
 import com.buterfleoge.whale.type.protocol.account.PostBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
@@ -108,6 +109,14 @@ public class AccountController extends RabbitController {
         String referer = request.getHeader("Referer");
         return StringUtils.isEmpty(referer) || referer.startsWith(WebConfig.ACCOUNT_HOME_URL_PREFIX)
                 || referer.startsWith(WebConfig.ORDER_URL_PREFIX) ? "redirect:/" : "redirect:" + referer;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/discountcode", method = RequestMethod.GET)
+    public GetDiscountCodeResponse deleteContacts(Request request) throws Exception {
+        GetDiscountCodeResponse response = new GetDiscountCodeResponse();
+        accountBiz.getDiscountCode(requireAccountid(), request, response);
+        return response;
     }
 
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)
