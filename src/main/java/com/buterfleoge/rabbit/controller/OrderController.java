@@ -52,6 +52,7 @@ import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
  * @author Brent24
  *
  */
+@SuppressWarnings("deprecation")
 @Controller
 @RequestMapping("/order")
 public class OrderController extends RabbitController {
