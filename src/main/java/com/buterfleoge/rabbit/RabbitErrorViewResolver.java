@@ -18,7 +18,7 @@ public class RabbitErrorViewResolver implements ErrorViewResolver {
 
     @Override
     public ModelAndView resolveErrorView(HttpServletRequest request, HttpStatus status, Map<String, Object> model) {
-        return HttpStatus.NOT_FOUND.equals(status) ? new ModelAndView("404", model) : new ModelAndView("error", model);
+        return HttpStatus.NOT_FOUND.equals(status) ? new ModelAndView("notfound.html", model) : new ModelAndView("error.html", model);
     }
 
 }

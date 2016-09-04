@@ -53,7 +53,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         viewMap.put("/routes", "/routes.html");
         viewMap.put("/activities", "/activities.html");
         viewMap.put(LOGIN_URL, "/login.html");
-        viewMap.put(NOTAUTH_URL, "/notauth");
+        viewMap.put(NOTAUTH_URL, "/notauth.html");
     }
 
     @Value("${img.host.url}")
