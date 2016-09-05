@@ -36,6 +36,7 @@ import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersResponse;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
 import com.buterfleoge.whale.type.protocol.order.GetOrderResponse;
+import com.buterfleoge.whale.type.protocol.order.GetRefundTypeResponse;
 import com.buterfleoge.whale.type.protocol.order.NewOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.NewOrderResponse;
 import com.buterfleoge.whale.type.protocol.order.OrderRequest;
@@ -170,10 +171,18 @@ public class OrderController extends RabbitController {
     }
 
     @ResponseBody
+    @RequestMapping(value = "/refundtype", method = RequestMethod.GET)
+    public GetRefundTypeResponse getRefundType(OrderRequest request) throws Exception {
+        GetRefundTypeResponse response = new GetRefundTypeResponse();
+        refundOrderBiz.getRefundType(requireAccountid(), request, response);
+        return response;
+    }
+
+    @ResponseBody
     @RequestMapping(value = "/refund", method = RequestMethod.POST)
-    public Response getRefoundInfo(RefundOrderRequest request) throws Exception {
+    public Response refundOrder(RefundOrderRequest request) throws Exception {
         Response response = new Response();
-        refundOrderBiz.getRefundInfo(requireAccountid(), request, response);
+        refundOrderBiz.refundOrder(requireAccountid(), request, response);
         return response;
     }
 
