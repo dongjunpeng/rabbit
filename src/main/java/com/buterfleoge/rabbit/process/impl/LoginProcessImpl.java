@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.buterfleoge.rabbit.WebConfig;
@@ -29,7 +29,7 @@ import com.buterfleoge.whale.type.entity.AccountInfo;
  * @author xiezhenzong
  *
  */
-@Service("loginProcess")
+@Component("loginProcess")
 public class LoginProcessImpl implements LoginProcess {
 
     private static final Logger LOG = LoggerFactory.getLogger(LoginProcessImpl.class);

@@ -25,6 +25,7 @@ import com.buterfleoge.rabbit.interceptor.CookieInterceptor;
 import com.buterfleoge.rabbit.interceptor.LoginStateInterceptor;
 import com.buterfleoge.rabbit.interceptor.RabbitWebContextInterceptor;
 import com.buterfleoge.rabbit.interceptor.WxLoginInterceptor;
+import com.buterfleoge.rabbit.view.PdfView;
 import com.buterfleoge.whale.Constants.CacheKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,23 +60,6 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     @Value("${img.host.url}")
     private String imgHostUrl;
 
-    @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
-        for (Entry<String, String> entry : viewMap.entrySet()) {
-            registry.addViewController(entry.getKey()).setViewName(entry.getValue());
-        }
-    }
-
-    @Override
-    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
-        for (HttpMessageConverter<?> httpMessageConverter : converters) {
-            if (httpMessageConverter instanceof MappingJackson2HttpMessageConverter) {
-                ObjectMapper om = ((MappingJackson2HttpMessageConverter) httpMessageConverter).getObjectMapper();
-                om.setAnnotationIntrospector(new RabbitJacksonAnnotationIntrospector(imgHostUrl));
-            }
-        }
-    }
-
     @Bean(name = "rabbitWebContextInterceptor")
     public HandlerInterceptor getRabbitWebContextInterceptor() {
         return new RabbitWebContextInterceptor();
@@ -94,6 +78,28 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     @Bean(name = "loginStateInterceptor")
     public HandlerInterceptor getLoginStateInterceptor() {
         return new LoginStateInterceptor();
+    }
+
+    @Bean(name = "pdfView")
+    public PdfView getContractView() {
+        return new PdfView();
+    }
+
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        for (Entry<String, String> entry : viewMap.entrySet()) {
+            registry.addViewController(entry.getKey()).setViewName(entry.getValue());
+        }
+    }
+
+    @Override
+    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+        for (HttpMessageConverter<?> httpMessageConverter : converters) {
+            if (httpMessageConverter instanceof MappingJackson2HttpMessageConverter) {
+                ObjectMapper om = ((MappingJackson2HttpMessageConverter) httpMessageConverter).getObjectMapper();
+                om.setAnnotationIntrospector(new RabbitJacksonAnnotationIntrospector(imgHostUrl));
+            }
+        }
     }
 
     @Override
