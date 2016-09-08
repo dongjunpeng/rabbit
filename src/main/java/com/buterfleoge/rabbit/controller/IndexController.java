@@ -8,8 +8,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
 
+import com.buterfleoge.rabbit.view.PdfView;
 import com.buterfleoge.whale.biz.travel.TravelBiz;
+import com.buterfleoge.whale.type.protocol.order.GetContractRequest;
 import com.buterfleoge.whale.type.protocol.travel.GetRouteRequest;
 import com.buterfleoge.whale.type.protocol.travel.GetRouteResponse;
 
@@ -41,6 +44,20 @@ public class IndexController {
         GetRouteResponse response = new GetRouteResponse();
         travelBiz.getRoute(request, response);
         return response;
+    }
+
+    @RequestMapping(value = "/hxy_secure_notice", method = RequestMethod.GET)
+    public ModelAndView getHxySecureNotice(GetContractRequest request) throws Exception {
+        ModelAndView modelAndView = new ModelAndView("pdfView");
+        modelAndView.addObject(PdfView.PATH_KEY, "classpath:/hxy_secure_notice.pdf");
+        return modelAndView;
+    }
+
+    @RequestMapping(value = "/hxy_signup_notice", method = RequestMethod.GET)
+    public ModelAndView getHxyXXXNotice(GetContractRequest request) throws Exception {
+        ModelAndView modelAndView = new ModelAndView("pdfView");
+        modelAndView.addObject(PdfView.PATH_KEY, "classpath:/hxy_signup_notice.pdf");
+        return modelAndView;
     }
 
 }

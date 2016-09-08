@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.multiaction.NoSuchRequestHandlingMethodException;
 
+import com.buterfleoge.rabbit.view.PdfView;
 import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.order.CancelOrderBiz;
 import com.buterfleoge.whale.biz.order.CreateOrderBiz;
@@ -33,6 +34,7 @@ import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.order.CreateOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersResponse;
+import com.buterfleoge.whale.type.protocol.order.GetContractRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
 import com.buterfleoge.whale.type.protocol.order.GetOrderResponse;
@@ -119,6 +121,15 @@ public class OrderController extends RabbitController {
         Response response = new Response();
         cancelOrderBiz.cancelOrder(requireAccountid(), request, response);
         return response;
+    }
+
+    @RequestMapping(value = "/contract/travel_contract", method = RequestMethod.GET)
+    public ModelAndView getOrderContract(GetContractRequest request) throws Exception {
+        Response response = new Response();
+        String pdfPath = createOrderBiz.createContract(requireAccountid(), request, response);
+        ModelAndView modelAndView = new ModelAndView("pdfView");
+        modelAndView.addObject(PdfView.PATH_KEY, pdfPath);
+        return modelAndView;
     }
 
     @RequestMapping(value = "/pay", method = RequestMethod.GET)
