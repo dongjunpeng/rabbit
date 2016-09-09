@@ -49,14 +49,14 @@ public class IndexController {
     @RequestMapping(value = "/hxy_secure_notice", method = RequestMethod.GET)
     public ModelAndView getHxySecureNotice(GetContractRequest request) throws Exception {
         ModelAndView modelAndView = new ModelAndView("pdfView");
-        modelAndView.addObject(PdfView.PATH_KEY, "classpath:/hxy_secure_notice.pdf");
+        modelAndView.addObject(PdfView.PATH_KEY, "classpath:hxy_secure_notice.pdf");
         return modelAndView;
     }
 
     @RequestMapping(value = "/hxy_signup_notice", method = RequestMethod.GET)
     public ModelAndView getHxyXXXNotice(GetContractRequest request) throws Exception {
         ModelAndView modelAndView = new ModelAndView("pdfView");
-        modelAndView.addObject(PdfView.PATH_KEY, "classpath:/hxy_signup_notice.pdf");
+        modelAndView.addObject(PdfView.PATH_KEY, "classpath:hxy_signup_notice.pdf");
         return modelAndView;
     }
 
