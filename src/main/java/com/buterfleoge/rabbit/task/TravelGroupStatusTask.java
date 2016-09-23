@@ -20,13 +20,13 @@ import com.buterfleoge.whale.type.entity.TravelGroup;
 @Component
 public class TravelGroupStatusTask {
 
-    private static final Set<GroupStatus> GROUPCHECK = new HashSet<GroupStatus>();
+    private static final Set<Integer> GROUPCHECK = new HashSet<Integer>();
 
     static {
         // 团状态 招募中和已满的
-        GROUPCHECK.add(GroupStatus.OPEN);
-        GROUPCHECK.add(GroupStatus.FULL);
-        GROUPCHECK.add(GroupStatus.TRAVELLING);
+        GROUPCHECK.add(GroupStatus.OPEN.value);
+        GROUPCHECK.add(GroupStatus.FULL.value);
+        GROUPCHECK.add(GroupStatus.TRAVELLING.value);
     }
 
     @Autowired
