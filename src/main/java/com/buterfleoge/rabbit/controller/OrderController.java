@@ -26,7 +26,7 @@ import com.buterfleoge.whale.biz.order.PayOrderBiz;
 import com.buterfleoge.whale.biz.order.RefundOrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
 import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateNotifyRequest;
-import com.buterfleoge.whale.service.alipay.protocol.AlipayReturnRequest;
+import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateReturnRequest;
 import com.buterfleoge.whale.type.entity.OrderInfo;
 import com.buterfleoge.whale.type.protocol.Error;
 import com.buterfleoge.whale.type.protocol.Request;
@@ -143,7 +143,7 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/alipay/return", method = RequestMethod.GET)
-    public ModelAndView alipayReturn(AlipayReturnRequest request, HttpServletRequest httpRequest) throws Exception {
+    public ModelAndView alipayReturn(AlipayCreateReturnRequest request, HttpServletRequest httpRequest) throws Exception {
         ModelAndView modelAndView;
         Response response = new Response();
         try {
