@@ -1,11 +1,16 @@
 package com.buterfleoge.rabbit.controller;
 
 import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -15,6 +20,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.rabbit.process.LoginProcess;
@@ -43,6 +49,9 @@ public class WxController extends RabbitController implements InitializingBean {
 
     @Value("${wx.login.callback}")
     private String wxLoginCallback;
+
+    @Value("${wx.cgi-bin.token}")
+    private String wxCgibinToken;
 
     @Autowired
     private LoginProcess loginProcess;
@@ -86,6 +95,31 @@ public class WxController extends RabbitController implements InitializingBean {
         response.getWriter().write(WX_LOGING_CALLBACK);
     }
 
+    @RequestMapping(value = "/message", method = RequestMethod.GET)
+    public void wxMessageGet(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        try {
+            String signature = getParameter(parameterMap, "signature");
+            String timestamp = getParameter(parameterMap, "timestamp");
+            String nonce = getParameter(parameterMap, "nonce");
+            String echostr = getParameter(parameterMap, "echostr");
+            String cryptStr = getCryptStr(wxCgibinToken, timestamp, nonce);
+            if (signature.equals(cryptStr)) {
+                response.getWriter().write(echostr);
+            } else {
+                response.getWriter().write("failed");
+            }
+        } catch (Exception e) {
+            LOG.error("valid failed, reqid: " + req.getReqid(), e);
+            response.getWriter().write("failed");
+        }
+    }
+
+    @RequestMapping(value = "/message", method = RequestMethod.POST)
+    public void wxMessagePost(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+    }
+
     private static String createState() {
         StringBuilder sb = new StringBuilder(DefaultValue.TOKEN) //
                 .append(DefaultValue.SEPARATOR).append(System.currentTimeMillis()) //
@@ -112,6 +146,22 @@ public class WxController extends RabbitController implements InitializingBean {
 
     private String getWxLoginStateKey(String state) {
         return CacheKey.WX_LOGIN_STATE_PREFIX + DefaultValue.SEPARATOR + state;
+    }
+
+    private String getParameter(Map<String, String[]> parameterMap, String key) {
+        String[] parameters = parameterMap.get(key);
+        System.out.println(Arrays.toString(parameters));
+        if (parameters == null) {
+            throw new IllegalArgumentException("Can't find this parameter in query string: " + parameterMap + ", by key: " + key);
+        }
+        return parameters[0];
+    }
+
+    private String getCryptStr(String token, String timestamp, String nonce) {
+        List<String> parameters = Arrays.asList(token, timestamp, nonce);
+        Collections.sort(parameters);
+        String string = parameters.get(0) + parameters.get(1) + parameters.get(2);
+        return DigestUtils.sha1Hex(string);
     }
 
 }
