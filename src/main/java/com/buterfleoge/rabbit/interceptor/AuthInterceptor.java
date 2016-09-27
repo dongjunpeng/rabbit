@@ -58,7 +58,7 @@ public abstract class AuthInterceptor extends RabbitInterceptor {
     }
 
     private boolean refreshToken(String refreshToken, String accountTokenCacheKey) {
-        // FIXME: 后台进程refresh token
+        // FIXME: 后台进程refresh token?
         try {
             WxAccessTokenResponse accessToken = weixinWebService.refreshToken(refreshToken);
             if (accessToken != null && accessToken.getErrcode() == null) {

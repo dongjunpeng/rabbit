@@ -1,7 +1,7 @@
 package com.buterfleoge.rabbit;
 
 import java.io.IOException;
-import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -13,6 +13,7 @@ import org.springframework.format.Parser;
 import org.springframework.format.Printer;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.NumberFormat;
+import org.springframework.format.annotation.NumberFormat.Style;
 import org.springframework.format.datetime.DateTimeFormatAnnotationFormatterFactory;
 import org.springframework.format.number.CurrencyStyleFormatter;
 import org.springframework.format.number.NumberFormatAnnotationFormatterFactory;
@@ -66,13 +67,18 @@ public class RabbitJacksonAnnotationIntrospector extends JacksonAnnotationIntros
         }
 
         NumberFormat numberFormat = _findAnnotation(a, NumberFormat.class);
-        if (numberFormat != null) {
-            NumberFormatAnnotationFormatterFactory factory = new NumberFormatAnnotationFormatterFactory();
-            Printer<Number> printer = factory.getPrinter(numberFormat, BigDecimal.class);
-            if (ClassUtils.isAssignableValue(CurrencyStyleFormatter.class, printer)) {
-                ((CurrencyStyleFormatter) printer).setFractionDigits(0);
-            }
-            return new RabbitSerializer<Number>(printer);
+        if (numberFormat != null && numberFormat.style() == Style.CURRENCY) {
+            return new RabbitSerializer<Number>(new Printer<Number>() {
+                @Override
+                public String print(Number object, Locale locale) {
+                    DecimalFormat format = (DecimalFormat) java.text.NumberFormat.getCurrencyInstance(locale);
+                    format.setParseBigDecimal(true);
+                    format.setMaximumFractionDigits(0);
+                    format.setMinimumFractionDigits(0);
+                    format.setGroupingUsed(false);
+                    return format.format(object);
+                }
+            });
         }
 
         ImagePathFormat imagePathFormat = _findAnnotation(a, ImagePathFormat.class);
