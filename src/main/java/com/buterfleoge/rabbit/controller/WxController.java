@@ -214,8 +214,6 @@ public class WxController extends RabbitController implements InitializingBean {
     }
 
     private String getRedirectUrl(HttpServletRequest request) throws UnsupportedEncodingException {
-        String query = request.getQueryString();
-        System.out.println("WxController getRedirectUrl  query: " + query);
         String redirect = request.getParameter("redirect");
         return URLDecoder.decode(redirect, "UTF-8");
     }

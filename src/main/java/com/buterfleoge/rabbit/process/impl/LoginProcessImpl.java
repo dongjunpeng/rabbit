@@ -88,6 +88,7 @@ public class LoginProcessImpl implements LoginProcess {
         if (wxIdMapping != null) {
             info = getAccountInfo(wxIdMapping.getAccountid());
         } // 如果为null，则表明还未授权，需要用户进行手动授权
+        addAccessTokenToCache(info.getAccountid(), accessToken, WebConfig.getWapAccessTokenKey(info.getAccountid()));
         return info;
     }
 
