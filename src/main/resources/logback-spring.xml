@@ -85,6 +85,6 @@
 	<root level="INFO">
 		<appender-ref ref="RABBIT_INFO_FILE" />
 		<appender-ref ref="RABBIT_ERROR_FILE" />
-		<appender-ref ref="CONSOLE" />
+		<!-- <appender-ref ref="CONSOLE" />  -->
 	</root>
 </configuration>

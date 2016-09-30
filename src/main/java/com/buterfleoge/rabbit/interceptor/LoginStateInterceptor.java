@@ -21,7 +21,7 @@ public class LoginStateInterceptor extends AuthInterceptor {
 
     @Override
     protected boolean shouldPreHandle(String path, HttpServletRequest request) {
-        if (StringUtils.isEmpty(path) && isWeixinUserAgent(request)) {
+        if (StringUtils.isEmpty(path) || isWeixinUserAgent(request)) {
             return false;
         }
         return (path.startsWith(ACCOUNT_HOME_URL_PREFIX) && !path.equals("/account/basicinfo"))
@@ -31,7 +31,10 @@ public class LoginStateInterceptor extends AuthInterceptor {
     @Override
     protected boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if ("GET".equals(request.getMethod())) {
-            StringBuffer buffer = request.getRequestURL().append("?").append(request.getQueryString());
+            StringBuffer buffer = request.getRequestURL();
+            if (request.getQueryString() != null) {
+                buffer.append("?").append(request.getQueryString());
+            }
             response.sendRedirect(WebConfig.LOGIN_URL + "?redirect=" + URLEncoder.encode(buffer.toString(), "UTF-8"));
         } else {
             response.sendRedirect(WebConfig.LOGIN_URL);

@@ -24,6 +24,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 import com.buterfleoge.rabbit.interceptor.CookieInterceptor;
 import com.buterfleoge.rabbit.interceptor.LoginStateInterceptor;
 import com.buterfleoge.rabbit.interceptor.RabbitWebContextInterceptor;
+import com.buterfleoge.rabbit.interceptor.WapInterceptor;
 import com.buterfleoge.rabbit.interceptor.WxLoginInterceptor;
 import com.buterfleoge.rabbit.view.PdfView;
 import com.buterfleoge.whale.Constants.CacheKey;
@@ -80,6 +81,11 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         return new LoginStateInterceptor();
     }
 
+    @Bean(name = "wapInterceptor")
+    public HandlerInterceptor getWapInterceptor() {
+        return new WapInterceptor();
+    }
+
     @Bean(name = "pdfView")
     public PdfView getContractView() {
         return new PdfView();
@@ -108,6 +114,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         registry.addInterceptor(getCookieInterceptor());
         registry.addInterceptor(getWxLoginInterceptor());
         registry.addInterceptor(getLoginStateInterceptor());
+        registry.addInterceptor(getWapInterceptor());
     }
 
     public static String getAccountHomePage(Long accountid) {
@@ -154,6 +161,10 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     public static String getAccessTokenKey(Long accountid) {
         return CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid;
+    }
+
+    public static String getWapAccessTokenKey(Long accountid) {
+        return "m" + DefaultValue.SEPARATOR + CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid;
     }
 
 }
