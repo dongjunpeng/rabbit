@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.StringUtils;
 
@@ -35,6 +36,9 @@ public class WapInterceptor extends AuthInterceptor {
     @Autowired
     @Resource(name = "cacheTemplate")
     private ValueOperations<String, Object> operations;
+
+    @Value("${wx.login.base.callback}")
+    private String baseCallback;
 
     @Override
     protected boolean shouldPreHandle(String path, HttpServletRequest request) {
@@ -65,10 +69,11 @@ public class WapInterceptor extends AuthInterceptor {
     }
 
     private String createCallback(HttpServletRequest request) throws UnsupportedEncodingException {
-        StringBuilder builder = new StringBuilder("/wx/callback/base");
-        builder.append("?redirect=").append(request.getRequestURL()).append("?").append(request.getQueryString());
-        System.out.println("WapInteceptor createCallback: " + builder.toString());
-        System.out.println("WapInteceptor createCallback: " + URLEncoder.encode(builder.toString(), "UTF-8"));
+        StringBuilder builder = new StringBuilder(baseCallback);
+        builder.append("?redirect=").append(request.getRequestURL());
+        if (request.getQueryString() != null) {
+            builder.append("?").append(request.getQueryString());
+        }
         return URLEncoder.encode(builder.toString(), "UTF-8");
     }
 
