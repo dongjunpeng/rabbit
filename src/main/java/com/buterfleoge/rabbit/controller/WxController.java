@@ -157,6 +157,8 @@ public class WxController extends RabbitController implements InitializingBean {
         if (StringUtils.hasText(code) && getState(request.getParameter("state")) != null) {
             AccountInfo accountInfo = loginProcess.weixinWapUserInfoLogin(code);
             addBasicInfoToSession(accountInfo);
+            String redirect = request.getParameter("redirect");
+            return "redirect:" + redirect;
         }
         return "redirect:/syserror";
     }
@@ -207,7 +209,7 @@ public class WxController extends RabbitController implements InitializingBean {
 
     private String createCallback(HttpServletRequest request) throws UnsupportedEncodingException {
         StringBuilder builder = new StringBuilder(userinfoCallback);
-        builder.append("?redirect=").append(request.getQueryString() == null ? "/" : request.getQueryString());
+        builder.append("?redirect=").append(request.getQueryString() == null ? "/" : request.getParameter("redirect"));
         return URLEncoder.encode(builder.toString(), "UTF-8");
     }
 

@@ -15,6 +15,7 @@ import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.rabbit.process.LoginProcess;
 import com.buterfleoge.whale.dao.AccountBindingRepository;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
+import com.buterfleoge.whale.dao.WxIdMappingRepository;
 import com.buterfleoge.whale.exception.WeixinException;
 import com.buterfleoge.whale.service.WeixinWebService;
 import com.buterfleoge.whale.service.weixin.protocol.WxAccessTokenResponse;
@@ -23,6 +24,7 @@ import com.buterfleoge.whale.type.AccountStatus;
 import com.buterfleoge.whale.type.IdType;
 import com.buterfleoge.whale.type.entity.AccountBinding;
 import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.entity.WxIdMapping;
 
 /**
  *
@@ -51,6 +53,9 @@ public class LoginProcessImpl implements LoginProcess {
     @Autowired
     private AccountBindingRepository accountBindingRepository;
 
+    @Autowired
+    private WxIdMappingRepository wxIdMappingRepository;
+
     @Override
     public AccountInfo weixinWebLogin(String code) throws WeixinException {
         WxAccessTokenResponse accessToken = weixinWebService.getAccessToken(code);
@@ -68,7 +73,7 @@ public class LoginProcessImpl implements LoginProcess {
             }
             info = createAccountInfo(userinfoResponse);
         }
-        addAccessTokenToCache(info.getAccountid(), accessToken);
+        addAccessTokenToCache(info.getAccountid(), accessToken, WebConfig.getAccessTokenKey(info.getAccountid()));
         return info;
     }
 
@@ -78,11 +83,10 @@ public class LoginProcessImpl implements LoginProcess {
         if (accessToken == null || accessToken.getErrcode() != null) {
             throw new WeixinException("Get access token from weixin failed");
         }
-        AccountBinding weixinBinding = getWeixinBinding(accessToken.getUnionid());
+        WxIdMapping wxIdMapping = wxIdMappingRepository.findByOpenid(accessToken.getOpenid());
         AccountInfo info = null;
-        if (weixinBinding != null) {
-            info = getAccountInfo(weixinBinding.getAccountid());
-            addAccessTokenToCache(info.getAccountid(), accessToken);
+        if (wxIdMapping != null) {
+            info = getAccountInfo(wxIdMapping.getAccountid());
         } // 如果为null，则表明还未授权，需要用户进行手动授权
         return info;
     }
@@ -102,9 +106,9 @@ public class LoginProcessImpl implements LoginProcess {
             if (userinfoResponse == null || userinfoResponse.getErrcode() != null) {
                 throw new WeixinException("Get user info from weixin failed");
             }
-            info = createAccountInfo(userinfoResponse);
+            info = createAccountInfoAndRecordWxIdMapping(userinfoResponse);
         }
-        addAccessTokenToCache(info.getAccountid(), accessToken);
+        addAccessTokenToCache(info.getAccountid(), accessToken, WebConfig.getWapAccessTokenKey(info.getAccountid()));
         return info;
     }
 
@@ -129,6 +133,14 @@ public class LoginProcessImpl implements LoginProcess {
             throws WeixinException {
         AccountInfo accountInfo = insertAccountInfo(userinfoResponse);
         insertAccountSetting(accountInfo, userinfoResponse.getUnionid());
+        return accountInfo;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    private AccountInfo createAccountInfoAndRecordWxIdMapping(WxUserinfoResponse userinfoResponse) throws WeixinException {
+        AccountInfo accountInfo = insertAccountInfo(userinfoResponse);
+        insertAccountSetting(accountInfo, userinfoResponse.getUnionid());
+        insertWxIdMapping(accountInfo, userinfoResponse);
         return accountInfo;
     }
 
@@ -163,9 +175,21 @@ public class LoginProcessImpl implements LoginProcess {
         }
     }
 
-    private void addAccessTokenToCache(Long accountid, WxAccessTokenResponse accessToken) {
+    private void insertWxIdMapping(AccountInfo accountInfo, WxUserinfoResponse userinfoResponse) throws WeixinException {
+        WxIdMapping wxIdMapping = new WxIdMapping();
+        wxIdMapping.setAccountid(accountInfo.getAccountid());
+        wxIdMapping.setOpenid(userinfoResponse.getOpenid());
+        wxIdMapping.setUnionid(userinfoResponse.getUnionid());
+        wxIdMapping.setAddTime(new Date());
         try {
-            String cacheKey = WebConfig.getAccessTokenKey(accountid);
+            wxIdMappingRepository.save(wxIdMapping);
+        } catch (Exception e) {
+            throw new WeixinException("insert wxidmapping failed, info: " + accountInfo + ", wxidmapping: " + wxIdMapping, e);
+        }
+    }
+
+    private void addAccessTokenToCache(Long accountid, WxAccessTokenResponse accessToken, String cacheKey) {
+        try {
             operations.set(cacheKey, accessToken);
         } catch (Exception e) {
             LOG.error("add access token to cache failed, accessToken: " + accessToken, e);

@@ -163,4 +163,8 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         return CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid;
     }
 
+    public static String getWapAccessTokenKey(Long accountid) {
+        return "m" + DefaultValue.SEPARATOR + CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid;
+    }
+
 }

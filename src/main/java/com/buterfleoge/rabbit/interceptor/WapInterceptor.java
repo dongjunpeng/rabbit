@@ -51,7 +51,7 @@ public class WapInterceptor extends AuthInterceptor {
 
     @Override
     protected String getAccesstokenKey(Long accountid) {
-        return "m" + DefaultValue.SEPARATOR + super.getAccesstokenKey(accountid);
+        return WebConfig.getWapAccessTokenKey(accountid);
     }
 
     @Override
