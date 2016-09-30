@@ -119,6 +119,12 @@ public class AccountController extends RabbitController {
         return response;
     }
 
+    @RequestMapping(value = "/wap/home", method = RequestMethod.GET)
+    public String getWapHome(Request request) throws Exception {
+        Long accountid = requireAccountid();
+        return "forward:/account/" + accountid;
+    }
+
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)
     public String getAccountPage(@PathVariable Long accountid, Request request) throws Exception {
         if (requireAccountid().equals(accountid)) {
