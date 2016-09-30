@@ -19,7 +19,7 @@ public abstract class RabbitInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if (!shouldPreHandle(request.getRequestURI())) {
+        if (!shouldPreHandle(request.getRequestURI(), request)) {
             return true;
         }
         return preHandle(request.getRequestURI(), request, response);
@@ -35,7 +35,7 @@ public abstract class RabbitInterceptor implements HandlerInterceptor {
             throws Exception {
     }
 
-    protected boolean shouldPreHandle(String path) {
+    protected boolean shouldPreHandle(String path, HttpServletRequest request) {
         return true;
     }
 

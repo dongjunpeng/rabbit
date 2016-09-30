@@ -29,7 +29,7 @@ public class CookieInterceptor extends RabbitInterceptor {
     private AesEncryption aesEncryption;
 
     @Override
-    protected boolean shouldPreHandle(String path) {
+    protected boolean shouldPreHandle(String path, HttpServletRequest request) {
         return true;
     }
 

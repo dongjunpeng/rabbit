@@ -38,7 +38,12 @@ public class LoginProcessImpl implements LoginProcess {
     private ValueOperations<String, Object> operations;
 
     @Autowired
+    @Resource(name = "weixinWebService")
     private WeixinWebService weixinWebService;
+
+    @Autowired
+    @Resource(name = "weixinCgibinService")
+    private WeixinWebService weixinCgibinService;
 
     @Autowired
     private AccountInfoRepository accountInfoRepository;
@@ -52,16 +57,51 @@ public class LoginProcessImpl implements LoginProcess {
         if (accessToken == null || accessToken.getErrcode() != null) {
             throw new WeixinException("Get access token from weixin failed");
         }
-        WxUserinfoResponse userinfoResponse = weixinWebService.getUserinfo(accessToken.getAccess_token(),
-                accessToken.getOpenid());
-        if (userinfoResponse == null || userinfoResponse.getErrcode() != null) {
-            throw new WeixinException("Get user info from weixin failed");
-        }
-        AccountBinding weixinBinding = getWeixinBinding(userinfoResponse.getUnionid());
+        AccountBinding weixinBinding = getWeixinBinding(accessToken.getUnionid());
         AccountInfo info = null;
         if (weixinBinding != null) {
             info = getAccountInfo(weixinBinding.getAccountid());
         } else {
+            WxUserinfoResponse userinfoResponse = weixinWebService.getUserinfo(accessToken.getAccess_token(), accessToken.getOpenid());
+            if (userinfoResponse == null || userinfoResponse.getErrcode() != null) {
+                throw new WeixinException("Get user info from weixin failed");
+            }
+            info = createAccountInfo(userinfoResponse);
+        }
+        addAccessTokenToCache(info.getAccountid(), accessToken);
+        return info;
+    }
+
+    @Override
+    public AccountInfo weixinWapBaseLogin(String code) throws WeixinException {
+        WxAccessTokenResponse accessToken = weixinCgibinService.getAccessToken(code);
+        if (accessToken == null || accessToken.getErrcode() != null) {
+            throw new WeixinException("Get access token from weixin failed");
+        }
+        AccountBinding weixinBinding = getWeixinBinding(accessToken.getUnionid());
+        AccountInfo info = null;
+        if (weixinBinding != null) {
+            info = getAccountInfo(weixinBinding.getAccountid());
+            addAccessTokenToCache(info.getAccountid(), accessToken);
+        } // 如果为null，则表明还未授权，需要用户进行手动授权
+        return info;
+    }
+
+    @Override
+    public AccountInfo weixinWapUserInfoLogin(String code) throws WeixinException {
+        WxAccessTokenResponse accessToken = weixinCgibinService.getAccessToken(code);
+        if (accessToken == null || accessToken.getErrcode() != null) {
+            throw new WeixinException("Get access token from weixin failed");
+        }
+        AccountBinding weixinBinding = getWeixinBinding(accessToken.getUnionid());
+        AccountInfo info = null;
+        if (weixinBinding != null) {
+            info = getAccountInfo(weixinBinding.getAccountid());
+        } else { // 生成账号
+            WxUserinfoResponse userinfoResponse = weixinCgibinService.getUserinfo(accessToken.getAccess_token(), accessToken.getOpenid());
+            if (userinfoResponse == null || userinfoResponse.getErrcode() != null) {
+                throw new WeixinException("Get user info from weixin failed");
+            }
             info = createAccountInfo(userinfoResponse);
         }
         addAccessTokenToCache(info.getAccountid(), accessToken);

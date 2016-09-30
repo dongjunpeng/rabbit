@@ -1,5 +1,7 @@
 package com.buterfleoge.rabbit.interceptor;
 
+import java.net.URLEncoder;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -18,8 +20,8 @@ public class LoginStateInterceptor extends AuthInterceptor {
     private static final String ORDER_URL_PREFIX = WebConfig.ORDER_URL_PREFIX;
 
     @Override
-    protected boolean shouldPreHandle(String path) {
-        if (StringUtils.isEmpty(path)) {
+    protected boolean shouldPreHandle(String path, HttpServletRequest request) {
+        if (StringUtils.isEmpty(path) && isWeixinUserAgent(request)) {
             return false;
         }
         return (path.startsWith(ACCOUNT_HOME_URL_PREFIX) && !path.equals("/account/basicinfo"))
@@ -28,14 +30,13 @@ public class LoginStateInterceptor extends AuthInterceptor {
 
     @Override
     protected boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        response.sendRedirect(WebConfig.LOGIN_URL + "?redirect=" + request.getRequestURI());
+        if ("GET".equals(request.getMethod())) {
+            StringBuffer buffer = request.getRequestURL().append("?").append(request.getQueryString());
+            response.sendRedirect(WebConfig.LOGIN_URL + "?redirect=" + URLEncoder.encode(buffer.toString(), "UTF-8"));
+        } else {
+            response.sendRedirect(WebConfig.LOGIN_URL);
+        }
         return false;
-    }
-
-    @Override
-    protected boolean hasAccountBasicInfo(HttpServletRequest request, HttpServletResponse response, Long accountid)
-            throws Exception {
-        return true;
     }
 
 }

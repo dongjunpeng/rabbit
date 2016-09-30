@@ -1,5 +1,7 @@
 package com.buterfleoge.rabbit.controller;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +32,7 @@ import com.buterfleoge.whale.Constants.CookieKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
 import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.service.WeixinWebService;
+import com.buterfleoge.whale.service.weixin.protocol.WxLoginScope;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.protocol.Request;
 
@@ -57,8 +60,14 @@ public class WxController extends RabbitController implements InitializingBean {
     private LoginProcess loginProcess;
 
     @Autowired
+    @Resource(name = "weixinWebService")
     private WeixinWebService weixinWebService;
 
+    @Autowired
+    @Resource(name = "weixinCgibinService")
+    private WeixinWebService weixinCgibinService;
+
+    @Autowired
     @Resource(name = "cacheTemplate")
     private ValueOperations<String, Object> operations;
 
@@ -73,7 +82,7 @@ public class WxController extends RabbitController implements InitializingBean {
     @RequestMapping(value = "/login")
     public void wxLogin(Request req, HttpServletRequest request, HttpServletResponse httpResponse) throws Exception {
         String state = createState();
-        String wxLoginUri = weixinWebService.getLoginUri(state, wxLoginCallback);
+        String wxLoginUri = weixinWebService.getLoginUri(state, wxLoginCallback, WxLoginScope.SNSAPI_LOGIN);
         setState(state);
         httpResponse.sendRedirect(wxLoginUri);
     }
@@ -117,10 +126,37 @@ public class WxController extends RabbitController implements InitializingBean {
 
     @RequestMapping(value = "/message", method = RequestMethod.POST)
     public void wxMessagePost(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
-
+        response.getWriter().write("你请求这个干啥，别搞事！！！");
     }
 
-    private static String createState() {
+    @RequestMapping(value = "/wap/callback/base")
+    public String wxWapBaseCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String code = request.getParameter("code");
+        if (StringUtils.hasText(code) && getState(request.getParameter("state")) != null) {
+            AccountInfo accountInfo = loginProcess.weixinWapBaseLogin(code);
+            if (accountInfo != null) {
+                addBasicInfoToSession(accountInfo);
+                return "redirect:" + getRedirectUrl(request);
+            }
+        }
+        // 跳转到手动授权链接
+        String state = WxController.createState();
+        String wxLoginUri = weixinCgibinService.getLoginUri(state, createCallback(request), WxLoginScope.SNSAPI_USERINFO);
+        setState(state);
+        return "redirect:" + wxLoginUri;
+    }
+
+    @RequestMapping(value = "/wap/callback/userinfo")
+    public String wxWapUserinfoCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String code = request.getParameter("code");
+        if (StringUtils.hasText(code) && getState(request.getParameter("state")) != null) {
+            AccountInfo accountInfo = loginProcess.weixinWapUserInfoLogin(code);
+            addBasicInfoToSession(accountInfo);
+        }
+        return "redirect:/syserror";
+    }
+
+    public static String createState() {
         StringBuilder sb = new StringBuilder(DefaultValue.TOKEN) //
                 .append(DefaultValue.SEPARATOR).append(System.currentTimeMillis()) //
                 .append(DefaultValue.SEPARATOR).append(Math.random());
@@ -162,6 +198,21 @@ public class WxController extends RabbitController implements InitializingBean {
         Collections.sort(parameters);
         String string = parameters.get(0) + parameters.get(1) + parameters.get(2);
         return DigestUtils.sha1Hex(string);
+    }
+
+    private String createCallback(HttpServletRequest request) throws UnsupportedEncodingException {
+        StringBuilder builder = new StringBuilder("/wx/callback/userinfo");
+        builder.append("?redirect=").append(request.getRequestURL()).append("?").append(request.getQueryString());
+        System.out.println("WapInteceptor createCallback: " + builder.toString());
+        System.out.println("WapInteceptor createCallback: " + URLEncoder.encode(builder.toString(), "UTF-8"));
+        return URLEncoder.encode(builder.toString(), "UTF-8");
+    }
+
+    private String getRedirectUrl(HttpServletRequest request) throws UnsupportedEncodingException {
+        String query = request.getQueryString();
+        System.out.println("WxController getRedirectUrl  query: " + query);
+        String redirect = request.getParameter("redirect");
+        return URLDecoder.decode(redirect, "UTF-8");
     }
 
 }

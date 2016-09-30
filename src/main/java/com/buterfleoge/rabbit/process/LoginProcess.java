@@ -12,4 +12,8 @@ public interface LoginProcess {
 
     AccountInfo weixinWebLogin(String code) throws WeixinException;
 
+    AccountInfo weixinWapBaseLogin(String code) throws WeixinException;
+
+    AccountInfo weixinWapUserInfoLogin(String code) throws WeixinException;
+
 }

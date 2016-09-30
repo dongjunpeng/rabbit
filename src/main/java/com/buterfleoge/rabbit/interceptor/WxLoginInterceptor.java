@@ -13,13 +13,8 @@ import com.buterfleoge.rabbit.WebConfig;
 public class WxLoginInterceptor extends AuthInterceptor {
 
     @Override
-    protected boolean shouldPreHandle(String path) {
+    protected boolean shouldPreHandle(String path, HttpServletRequest request) {
         return WebConfig.WX_LOGIN_URL.equals(path);
-    }
-
-    @Override
-    protected boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        return true;
     }
 
     @Override
