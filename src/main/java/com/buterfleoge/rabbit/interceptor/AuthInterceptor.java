@@ -21,8 +21,10 @@ import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 public abstract class AuthInterceptor extends RabbitInterceptor {
 
     @Autowired
+    @Resource(name = "weixinWebService")
     private WeixinWebService weixinWebService;
 
+    @Autowired
     @Resource(name = "cacheTemplate")
     private ValueOperations<String, Object> operations;
 
@@ -31,10 +33,10 @@ public abstract class AuthInterceptor extends RabbitInterceptor {
         AccountBasicInfo basicInfo = (AccountBasicInfo) request.getSession().getAttribute(SessionKey.ACCOUNT_BASIC_INFO);
         if (basicInfo != null) {
             Long accountid = basicInfo.getAccountInfo().getAccountid();
-            String accountTokenCacheKey = WebConfig.getAccessTokenKey(accountid);
+            String accountTokenCacheKey = getAccesstokenKey(accountid);
             WxAccessTokenResponse accessToken = getAccessTokenFromCache(accountTokenCacheKey);
             if (accessToken != null
-                    && weixinWebService.isAccessTokenValid(accessToken.getAccess_token(), accessToken.getOpenid())) {
+                    && getWeixinWebService().isAccessTokenValid(accessToken.getAccess_token(), accessToken.getOpenid())) {
                 if (refreshToken(accessToken.getRefresh_token(), accountTokenCacheKey)) {
                     return hasAccountBasicInfo(request, response, accountid);
                 }
@@ -43,10 +45,27 @@ public abstract class AuthInterceptor extends RabbitInterceptor {
         return noAccountBasicInfo(request, response);
     }
 
-    protected abstract boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception;
+    protected String getAccesstokenKey(Long accountid) {
+        return WebConfig.getAccessTokenKey(accountid);
+    }
 
-    protected abstract boolean hasAccountBasicInfo(HttpServletRequest request, HttpServletResponse response, Long accountid)
-            throws Exception;
+    protected WeixinWebService getWeixinWebService() {
+        return weixinWebService;
+    }
+
+    protected boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        return true;
+    }
+
+    protected boolean hasAccountBasicInfo(HttpServletRequest request, HttpServletResponse response, Long accountid) throws Exception {
+        return true;
+    }
+
+    protected final boolean isWeixinUserAgent(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        System.out.println("user agent: " + userAgent);
+        return userAgent != null && userAgent.contains("MicroMessenger");
+    }
 
     private WxAccessTokenResponse getAccessTokenFromCache(String accountTokenCacheKey) {
         try {
@@ -58,9 +77,8 @@ public abstract class AuthInterceptor extends RabbitInterceptor {
     }
 
     private boolean refreshToken(String refreshToken, String accountTokenCacheKey) {
-        // FIXME: 后台进程refresh token?
         try {
-            WxAccessTokenResponse accessToken = weixinWebService.refreshToken(refreshToken);
+            WxAccessTokenResponse accessToken = getWeixinWebService().refreshToken(refreshToken);
             if (accessToken != null && accessToken.getErrcode() == null) {
                 operations.set(accountTokenCacheKey, accessToken); // 用refreshToken来更新accessToken
                 return true;
