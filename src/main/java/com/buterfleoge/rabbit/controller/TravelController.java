@@ -3,6 +3,7 @@
  */
 package com.buterfleoge.rabbit.controller;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import org.slf4j.Logger;
@@ -43,7 +44,8 @@ public class TravelController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/route", method = RequestMethod.GET)
-    public GetRouteResponse getRoute(GetRouteRequest request) throws Exception {
+    public GetRouteResponse getRoute(GetRouteRequest request, HttpServletRequest req) throws Exception {
+        request.setFromWx(isWeixinUserAgent(req));
         GetRouteResponse response = new GetRouteResponse();
         travelBiz.getRoute(request, response);
         return response;
@@ -58,11 +60,11 @@ public class TravelController extends RabbitController {
     }
 
     @RequestMapping(value = "/{travelid}", method = RequestMethod.GET)
-    public String getTravelPage(@PathVariable Long travelid, Request request) {
+    public String getTravelPage(@PathVariable Long travelid, Request request, HttpServletRequest req) {
         if (travelid > 0) {
             try {
                 if (travelRouteRepository.exists(travelid)) {
-                    return "travel";
+                    return isWeixinUserAgent(req) ? "wtravel" : "travel";
                 }
             } catch(Exception e) {
                 LOG.error("find travel failed, travelid: " + travelid + ", reqid: " + request.getReqid(), e);
