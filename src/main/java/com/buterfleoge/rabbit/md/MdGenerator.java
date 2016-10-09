@@ -1,9 +1,5 @@
 package com.buterfleoge.rabbit.md;
 
-import java.io.File;
-
-import org.apache.commons.io.FileUtils;
-
 /**
  * @author xiezhenzong
  *
@@ -15,8 +11,9 @@ public class MdGenerator {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        File file = new File("/Users/xiezhenzong/Downloads/travel_1.txt");
-        char[] text = FileUtils.readFileToString(file).toCharArray();
+        // File file = new File("/Users/xiezhenzong/Downloads/travel_1.txt");
+        // char[] text = FileUtils.readFileToString(file).toCharArray();
+        char[] text = "## $t1{标题测试一下}".toCharArray();
 
         int lineNo = 1, i = 0, n = text.length;
         String className = null, spanContent = null;
@@ -45,9 +42,9 @@ public class MdGenerator {
             }
         }
 
-        // System.out.println(mdBuilder.toString());
-        file = new File("/Users/xiezhenzong/Downloads/travel_1.md");
-        FileUtils.writeStringToFile(file, mdBuilder.toString());
+        System.out.println(mdBuilder.toString());
+        // file = new File("/Users/xiezhenzong/Downloads/travel_1.md");
+        // FileUtils.writeStringToFile(file, mdBuilder.toString());
     }
 
 }
@@ -75,7 +72,7 @@ abstract class Action {
                 }
                 return j;
             }
-            value.append(text[i]);
+            value.append(text[j]);
             j++;
         }
     }
