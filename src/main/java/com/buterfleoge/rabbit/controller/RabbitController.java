@@ -88,4 +88,9 @@ public abstract class RabbitController {
         requireHttpSession().setAttribute(SessionKey.ACCOUNT_BASIC_INFO, basicInfo);
     }
 
+    protected final boolean isWeixinUserAgent(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        return userAgent != null && userAgent.contains("MicroMessenger");
+    }
+
 }
