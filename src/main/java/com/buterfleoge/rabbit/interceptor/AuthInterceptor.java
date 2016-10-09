@@ -63,7 +63,6 @@ public abstract class AuthInterceptor extends RabbitInterceptor {
 
     protected final boolean isWeixinUserAgent(HttpServletRequest request) {
         String userAgent = request.getHeader("User-Agent");
-        System.out.println("user agent: " + userAgent);
         return userAgent != null && userAgent.contains("MicroMessenger");
     }
 
