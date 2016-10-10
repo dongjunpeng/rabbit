@@ -125,6 +125,16 @@ public class AccountController extends RabbitController {
         return "redirect:/account/" + accountid;
     }
 
+    @RequestMapping(value = "/wcontact", method = RequestMethod.GET)
+    public String getWapContact(Request request) throws Exception {
+        return "wcontact";
+    }
+
+    @RequestMapping(value = "/wdiscount", method = RequestMethod.GET)
+    public String getWapDiscount(Request request) throws Exception {
+        return "wdiscount";
+    }
+
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)
     public String getAccountPage(@PathVariable Long accountid, Request request) throws Exception {
         if (requireAccountid().equals(accountid)) {
