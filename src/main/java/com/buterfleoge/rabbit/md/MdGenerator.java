@@ -9,13 +9,12 @@ import org.apache.commons.io.FileUtils;
  *
  */
 public class MdGenerator {
-
-    /**
-     * @param args
-     * @throws Exception
-     */
     public static void main(String[] args) throws Exception {
-        File file = new File("/Users/xiezhenzong/Downloads/travel_1.txt");
+
+        String path = "D:/workspace/md/";
+        String fileName = "p01";
+
+        File file = new File(path + "source/" + fileName + ".txt");
         char[] text = FileUtils.readFileToString(file).toCharArray();
 
         int lineNo = 1, i = 0, n = text.length;
@@ -46,7 +45,7 @@ public class MdGenerator {
         }
 
         // System.out.println(mdBuilder.toString());
-        file = new File("/Users/xiezhenzong/Downloads/travel_1.md");
+        file = new File(path + fileName + ".md");
         FileUtils.writeStringToFile(file, mdBuilder.toString());
     }
 
@@ -75,7 +74,7 @@ abstract class Action {
                 }
                 return j;
             }
-            value.append(text[i]);
+            value.append(text[j]);
             j++;
         }
     }
