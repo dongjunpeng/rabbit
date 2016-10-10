@@ -27,7 +27,7 @@ public class MdGenerator {
                 lineNo++;
             }
 
-            if (c == '$') {
+            if (c == '@') {
                 Action action = new DollarAction(lineNo);
                 i = action.handle(text, i, n);
                 className = action.getValue();
@@ -94,7 +94,7 @@ abstract class Action {
 class DollarAction extends Action {
 
     public DollarAction(int lineNo) {
-        super(lineNo, '$');
+        super(lineNo, '@');
     }
 
     @Override
@@ -102,7 +102,7 @@ class DollarAction extends Action {
         if (c == '{') {
             return true;
         } else {
-            if (c == '$' || c == '}') {
+            if (c == '@' || c == '}') {
                 error();
             }
             return false;
@@ -121,7 +121,7 @@ class LeftBraceAction extends Action {
         if (c == '}') {
             return true;
         } else {
-            if (c == '$' || c == '{') {
+            if (c == '@' || c == '{') {
                 error();
             }
             return false;
