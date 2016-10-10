@@ -135,9 +135,11 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/pay", method = RequestMethod.GET)
     public void payOrder(PayOrderRequest request, HttpServletResponse httpResponse) throws Exception {
         PayOrderByAlipayResponse response = new PayOrderByAlipayResponse();
+
         payOrderBiz.payOrder(requireAccountid(), request, response);
         httpResponse.setHeader("Content-Type", "text/html;charset=UTF-8");
         httpResponse.getWriter().write(response.getAlipayFrom());
+
     }
 
     @RequestMapping(value = "/alipay/return", method = RequestMethod.GET)
@@ -165,8 +167,8 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/alipay/notify", method = RequestMethod.POST)
-    public void alipayNotify(AlipayCreateNotifyRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse)
-            throws Exception {
+    public void alipayNotify(AlipayCreateNotifyRequest request, HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) throws Exception {
         Response response = new Response();
         try {
             payOrderBiz.handlePayNotify(requireAccountid(), httpRequest.getParameterMap(), request, response);
@@ -214,7 +216,8 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/{orderid}", method = RequestMethod.GET)
-    public String getOrderPage(@PathVariable Long orderid, Request request, HttpServletRequest httpRequest) throws Exception {
+    public String getOrderPage(@PathVariable Long orderid, Request request, HttpServletRequest httpRequest)
+            throws Exception {
         Long accountid = requireAccountid();
         OrderInfo orderInfo = orderInfoRepository.findByOrderidAndAccountid(orderid, accountid);
         if (orderInfo == null) { // 通过NoSuchRequestHandlingMethodException来引发404异常

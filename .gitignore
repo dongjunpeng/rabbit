@@ -16,7 +16,6 @@ hs_err_pid*
 .classpath
 
 logs/
-src/main/resources/static/
 src/main/resources/application.properties
 
 src/main/resources/application-prod.properties
