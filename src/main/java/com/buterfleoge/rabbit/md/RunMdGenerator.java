@@ -23,41 +23,40 @@ class MdGenerator implements Runnable {
     public void run() {
         while (true) {
             try {
+
                 String path = "D:/workspace/md/";
-                String fileName = "p01";
+                String[] fileList = { "p00", "p01", "p02", "p03", "p04", "p05" };
 
-                File file = new File(path + "source/" + fileName + ".txt");
-                char[] text = FileUtils.readFileToString(file).toCharArray();
-
-                int lineNo = 1, i = 0, n = text.length;
-                String className = null, spanContent = null;
-                StringBuilder mdBuilder = new StringBuilder(text.length + 2048);
-                while (i < n) {
-                    char c = text[i++];
-
-                    if (c == '\n') {
-                        lineNo++;
+                for (String fileName : fileList) {
+                    File file = new File(path + "source/" + fileName + ".txt");
+                    char[] text = FileUtils.readFileToString(file).toCharArray();
+                    int lineNo = 1, i = 0, n = text.length;
+                    String className = null, spanContent = null;
+                    StringBuilder mdBuilder = new StringBuilder(text.length + 2048);
+                    while (i < n) {
+                        char c = text[i++];
+                        if (c == '\n') {
+                            lineNo++;
+                        }
+                        if (c == '@') {
+                            Action action = new DollarAction(lineNo);
+                            i = action.handle(text, i, n);
+                            className = action.getValue();
+                        } else if (c == '{') {
+                            Action action = new LeftBraceAction(lineNo);
+                            i = action.handle(text, i, n);
+                            spanContent = action.getValue();
+                        } else if (c == '}') {
+                            mdBuilder.append("<span class=\"").append(className).append("\">");
+                            mdBuilder.append(spanContent);
+                            mdBuilder.append("</span>");
+                        } else {
+                            mdBuilder.append(c);
+                        }
                     }
-
-                    if (c == '@') {
-                        Action action = new DollarAction(lineNo);
-                        i = action.handle(text, i, n);
-                        className = action.getValue();
-                    } else if (c == '{') {
-                        Action action = new LeftBraceAction(lineNo);
-                        i = action.handle(text, i, n);
-                        spanContent = action.getValue();
-                    } else if (c == '}') {
-                        mdBuilder.append("<span class=\"").append(className).append("\">");
-                        mdBuilder.append(spanContent);
-                        mdBuilder.append("</span>");
-                    } else {
-                        mdBuilder.append(c);
-                    }
+                    file = new File(path + fileName + ".md");
+                    FileUtils.writeStringToFile(file, mdBuilder.toString());
                 }
-
-                file = new File(path + fileName + ".md");
-                FileUtils.writeStringToFile(file, mdBuilder.toString());
                 System.out.println(new Date(System.currentTimeMillis()));
                 Thread.sleep(1000);
             } catch (Exception e) {
