@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>微信支付 -- 海逍遥带您旅行</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<meta name="renderer" content="webkit">
+</head>
+<body>
+    <div>能看到我吗？</div>
+    <script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+    <script>
+    wx.config({
+        'debug': true,
+        'appId': '${config.appid}',
+        'timestamp': '${config.timestamp}', 
+        'nonceStr': '${config.nonceStr}', 
+        'signature': '${config.signature}',
+        'jsApiList': ['chooseWXPay']
+    });
+
+    wx.ready(function(){
+        wx.checkJsApi({
+            'jsApiList': ['chooseWXPay'], 
+            'success': function(res) {
+                if (isError(res.errMsg) || !res.checkResult.chooseWXPay) {
+                    hxyError();
+                    return;
+                }
+                wx.chooseWXPay({
+                    'timestamp': '${pay.timestamp}', 
+                    'nonceStr': '${pay.nonceStr}', 
+                    'package': '${pay.package}',
+                    'signType': '${pay.signType}',
+                    'paySign': '${pay.paySign}', 
+                    'success': function (res) {
+                        window.location.href = '/order/wxpay/result?orderid=${pay.orderid}';
+                    },
+                    'fail': function() {
+                        hxyError();
+                    }
+                });
+            },
+            'fail': function() {
+                hxyError();
+            }
+        });
+    });
+    
+    wx.error(function(res){
+        hxyError();
+    });
+    
+    function hxyError() {
+        alert('失败，请直接联系海逍遥${hxy.hotline}');
+    }
+    
+    function isError(errMsg) {
+        return errMsg.split(':')[1] == 'ok';
+    }
+                </script>
+</body>
+</html>

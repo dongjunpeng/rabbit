@@ -119,12 +119,6 @@ public class AccountController extends RabbitController {
         return response;
     }
 
-    @RequestMapping(value = "/wap/home", method = RequestMethod.GET)
-    public String getWapHome(Request request) throws Exception {
-        Long accountid = requireAccountid();
-        return "redirect:/account/" + accountid;
-    }
-
     @RequestMapping(value = "/wcontact", method = RequestMethod.GET)
     public String getWapContact(Request request) throws Exception {
         return "wcontact";

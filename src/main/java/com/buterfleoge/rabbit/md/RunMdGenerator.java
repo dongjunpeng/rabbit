@@ -11,15 +11,16 @@ import org.apache.commons.io.FileUtils;
  */
 
 public class RunMdGenerator {
-    public static void main(String[] args) throws Exception {
-        MdGenerator md = new MdGenerator();
-        Thread thread = new Thread(md);
-        thread.start();
-    }
+    // public static void main(String[] args) throws Exception {
+    // MdGenerator md = new MdGenerator();
+    // Thread thread = new Thread(md);
+    // thread.start();
+    // }
 }
 
 class MdGenerator implements Runnable {
 
+    @Override
     public void run() {
         while (true) {
             try {

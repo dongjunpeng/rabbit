@@ -16,6 +16,17 @@ hs_err_pid*
 .classpath
 
 logs/
+src/main/resources/static/
 src/main/resources/application.properties
 
 src/main/resources/application-prod.properties
+
+src/main/resources/static/404.html
+
+src/main/resources/static/account.html
+
+src/main/resources/static/activities.html
+
+src/main/resources/static/canvas.html
+
+src/main/resources/static/error.html

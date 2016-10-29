@@ -27,6 +27,10 @@ import com.buterfleoge.whale.biz.order.RefundOrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
 import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateNotifyRequest;
 import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateReturnRequest;
+import com.buterfleoge.whale.service.weixin.protocol.WxPayJsapiNotifyRequest;
+import com.buterfleoge.whale.service.weixin.protocol.WxPayJsapiNotifyResponse;
+import com.buterfleoge.whale.type.PayType;
+import com.buterfleoge.whale.type.WxCode;
 import com.buterfleoge.whale.type.entity.OrderInfo;
 import com.buterfleoge.whale.type.protocol.Error;
 import com.buterfleoge.whale.type.protocol.Request;
@@ -41,6 +45,8 @@ import com.buterfleoge.whale.type.protocol.order.GetOrderResponse;
 import com.buterfleoge.whale.type.protocol.order.GetRefundTypeResponse;
 import com.buterfleoge.whale.type.protocol.order.NewOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.NewOrderResponse;
+import com.buterfleoge.whale.type.protocol.order.OrderPayResultRequest;
+import com.buterfleoge.whale.type.protocol.order.OrderPayResultResponse;
 import com.buterfleoge.whale.type.protocol.order.OrderRequest;
 import com.buterfleoge.whale.type.protocol.order.PayOrderByAlipayResponse;
 import com.buterfleoge.whale.type.protocol.order.PayOrderRequest;
@@ -133,13 +139,17 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/pay", method = RequestMethod.GET)
-    public void payOrder(PayOrderRequest request, HttpServletResponse httpResponse) throws Exception {
+    public ModelAndView payOrder(PayOrderRequest request, HttpServletResponse httpResponse) throws Exception {
         PayOrderByAlipayResponse response = new PayOrderByAlipayResponse();
-
         payOrderBiz.payOrder(requireAccountid(), request, response);
-        httpResponse.setHeader("Content-Type", "text/html;charset=UTF-8");
-        httpResponse.getWriter().write(response.getAlipayFrom());
 
+        ModelAndView modelAndView;
+        if (request.getPayType() == PayType.ALIPAY.value) {
+            modelAndView = new ModelAndView("alipay_form", response.getAlipayFrom());
+        } else {
+            modelAndView = new ModelAndView("wx_pay_jsapi", response.getWxJsapiModel());
+        }
+        return modelAndView;
     }
 
     @RequestMapping(value = "/alipay/return", method = RequestMethod.GET)
@@ -147,7 +157,7 @@ public class OrderController extends RabbitController {
         ModelAndView modelAndView;
         Response response = new Response();
         try {
-            payOrderBiz.handlePayReturn(requireAccountid(), httpRequest.getParameterMap(), request, response);
+            payOrderBiz.handleAlipayReturn(requireAccountid(), httpRequest.getParameterMap(), request, response);
             if (response.hasError()) {
                 modelAndView = new ModelAndView("alipay_create_direct_pay_failed");
             } else {
@@ -171,16 +181,43 @@ public class OrderController extends RabbitController {
             HttpServletResponse httpResponse) throws Exception {
         Response response = new Response();
         try {
-            payOrderBiz.handlePayNotify(requireAccountid(), httpRequest.getParameterMap(), request, response);
+            payOrderBiz.handleAlipayNotify(requireAccountid(), httpRequest.getParameterMap(), request, response);
             if (response.hasError()) {
                 httpResponse.getWriter().write("failed");
             } else {
                 httpResponse.getWriter().write("success");
             }
         } catch (Exception e) {
-            LOG.error("pay order failed, reqid: " + request.getReqid(), e);
+            LOG.error("handle alipay notify failed, reqid: " + request.getReqid(), e);
             httpResponse.getWriter().write("failed");
         }
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/wxpay/notify", method = RequestMethod.POST)
+    public WxPayJsapiNotifyResponse wxpayNotify(@RequestBody WxPayJsapiNotifyRequest request, HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse)
+            throws Exception {
+        WxPayJsapiNotifyResponse response = new WxPayJsapiNotifyResponse();
+        try {
+            payOrderBiz.handleWxpayNotify(requireAccountid(), request, response);
+        } catch (Exception e) {
+            LOG.error("handle wxpay notify failed, reqid: " + request.getReqid(), e);
+            response.setReturn_code(WxCode.FAIL.code);
+        }
+        return response;
+    }
+
+    @RequestMapping(value = "/payresult", method = RequestMethod.GET)
+    public OrderPayResultResponse getWxpayResult(OrderPayResultRequest request) throws Exception {
+        OrderPayResultResponse response = new OrderPayResultResponse();
+        try {
+            payOrderBiz.getOrderPayResult(requireAccountid(), request, response);
+        } catch (Exception e) {
+            LOG.error("get order pay result failed", e);
+            response.setStatus(Status.SYSTEM_ERROR);
+        }
+        return response;
     }
 
     @ResponseBody
@@ -223,7 +260,7 @@ public class OrderController extends RabbitController {
         if (orderInfo == null) { // 通过NoSuchRequestHandlingMethodException来引发404异常
             throw new NoSuchRequestHandlingMethodException(httpRequest);
         }
-        return "order";
+        return isWeixinUserAgent(httpRequest) ? "worder" : "order";
     }
 
 }

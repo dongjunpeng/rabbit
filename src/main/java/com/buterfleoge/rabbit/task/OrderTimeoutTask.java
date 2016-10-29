@@ -3,7 +3,9 @@ package com.buterfleoge.rabbit.task;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
@@ -25,6 +27,7 @@ import com.buterfleoge.whale.type.OrderStatus;
 import com.buterfleoge.whale.type.OrderStatusCategory;
 import com.buterfleoge.whale.type.entity.DiscountCode;
 import com.buterfleoge.whale.type.entity.OrderDiscount;
+import com.buterfleoge.whale.type.entity.OrderHistory;
 import com.buterfleoge.whale.type.entity.OrderInfo;
 import com.buterfleoge.whale.type.entity.TravelGroup;
 
@@ -60,8 +63,11 @@ public class OrderTimeoutTask {
 
         List<TravelGroup> travelGroups = new ArrayList<TravelGroup>(orderList.size());
         List<DiscountCode> discountCodes = new ArrayList<DiscountCode>(orderList.size());
+        List<OrderHistory> orderHistorys = new ArrayList<OrderHistory>(orderList.size());
         for (OrderInfo orderInfo : orderList) {
+            Integer oldOrderStatus = orderInfo.getStatus();
             orderInfo.setStatus(OrderStatus.TIMEOUT.value);
+            orderHistorys.add(OrderHistory.newInstance(oldOrderStatus, orderInfo));
 
             TravelGroup group = travelGroupRepository.findOne(orderInfo.getGroupid());
             group.setStatus(GroupStatus.OPEN.value);
@@ -75,7 +81,7 @@ public class OrderTimeoutTask {
                 discountCodes.add(discountCode);
             }
         }
-        // FIXME: 这里要是链表太长。。。
+        // 这里要是链表太长, 依赖spring的序列化方法了
         orderInfoRepository.save(orderList);
         travelGroupRepository.save(travelGroups);
         if (discountCodes.size() > 0) {
@@ -93,4 +99,57 @@ public class OrderTimeoutTask {
             return Collections.emptyList();
         }
     }
+
+    /**
+     * 批量操作中，每个分片采取的动作
+     *
+     * @author xiezhenzong
+     *
+     * @param <T>
+     *            template
+     */
+    public interface Action<T> {
+
+        /**
+         * 每个分片采取的动作
+         *
+         * @param arguments
+         *            arguments
+         * @return 分片结果
+         */
+        Map<Long, T> work(Object[] arguments);
+
+    }
+
+    /**
+     * 分片去做批量操作
+     *
+     * @param arguments
+     *            arguments
+     * @param batchSize
+     *            最大批量大小
+     * @param action
+     *            每个分片采取的动作
+     * @return final result
+     */
+    protected <T> Map<Long, T> shard(Object[] arguments, int batchSize, Action<T> action) {
+        Map<Long, T> result = new HashMap<Long, T>(arguments.length);
+        Object[] args = new Object[batchSize];
+        int i = 0;
+        int n = arguments.length / batchSize * batchSize;
+        for (; i < n; i += batchSize) {
+            System.arraycopy(arguments, i, args, 0, batchSize);
+            Map<Long, T> shardResult = action.work(args);
+            result.putAll(shardResult);
+        }
+        if (i < arguments.length) {
+            int remainSize = arguments.length - i;
+            args = new Object[remainSize];
+            System.arraycopy(arguments, i, args, 0, remainSize);
+            Map<Long, T> shardResult = action.work(args);
+            result.putAll(shardResult);
+        }
+        return result;
+    }
+
 }

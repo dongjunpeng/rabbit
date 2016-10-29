@@ -48,7 +48,8 @@ public class WxController extends RabbitController implements InitializingBean {
     private static final Logger LOG = LoggerFactory.getLogger(WxController.class);
 
     private static final String WX_LOGING_CALLBACK = "<!DOCTYPE html><html><head>"
-            + "<script>try{self.opener.location.reload();}catch(e){}self.close();</script></head><body></body></html>";
+            + "<script>try{console.log(self.opener); self.opener.reloadAccountBasicInfo();"
+            + "self.opener.location.reload();self.close();}catch(e){console.log(e);}</script></head><body></body></html>";
 
     @Value("${wx.login.callback}")
     private String wxLoginCallback;
