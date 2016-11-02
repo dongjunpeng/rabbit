@@ -1,6 +1,7 @@
 package com.buterfleoge.rabbit.controller;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,15 @@ public class IndexController {
     @RequestMapping(value = "/hot", method = RequestMethod.GET)
     public GetRouteResponse getHotRoute(GetRouteRequest request) throws Exception {
         request.setRouteids(hotRouteidSet);
+        GetRouteResponse response = new GetRouteResponse();
+        travelBiz.getRoute(request, response);
+        return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/wap/hot", method = RequestMethod.GET)
+    public GetRouteResponse getWapHotRoute(GetRouteRequest request) throws Exception {
+        request.setRouteids(Arrays.asList(hotRouteidSet.get(0)));
         GetRouteResponse response = new GetRouteResponse();
         travelBiz.getRoute(request, response);
         return response;

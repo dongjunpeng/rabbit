@@ -66,7 +66,7 @@ public class TravelController extends RabbitController {
                 if (travelRouteRepository.exists(travelid)) {
                     return isWeixinUserAgent(req) ? "wtravel" : "travel";
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 LOG.error("find travel failed, travelid: " + travelid + ", reqid: " + request.getReqid(), e);
             }
         }
