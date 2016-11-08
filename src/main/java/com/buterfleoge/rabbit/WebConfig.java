@@ -143,7 +143,8 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     }
 
     public static String createToken(Long accountid) {
-        return accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN + DefaultValue.SEPARATOR + System.currentTimeMillis();
+        return accountid + DefaultValue.SEPARATOR + DefaultValue.TOKEN + DefaultValue.SEPARATOR
+                + System.currentTimeMillis();
     }
 
     public static Long getAccountidFromToken(String token) {
