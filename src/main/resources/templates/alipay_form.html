@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>支付宝支付 -- 海逍遥带您旅行</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<meta name="renderer" content="webkit">
+</head>
+<body>
+    <form id="alipaysubmit" name="alipaysubmit" action="${gateway}" _input_charse="${_input_charse}" method="get">
+        <input type="hidden" name="service" value="${service}" />
+        <input type="hidden" name="partner" value="${partner}" />
+        <input type="hidden" name="seller_id" value="${seller_id}" />
+        <input type="hidden" name="_input_charset" value="${_input_charset}" />
+        <input type="hidden" name="payment_type" value="${payment_type}" />
+        <input type="hidden" name="notify_url" value="${notify_url}" />
+        <input type="hidden" name="return_url" value="${return_url}" />
+        <input type="hidden" name="out_trade_no" value="${out_trade_no}" />
+        <input type="hidden" name="subject" value="${subject}" />
+        <input type="hidden" name="total_fee" value="${total_fee}" />
+        <input type="hidden" name="sign" value="${sign}" />
+        <input type="hidden" name="sign_type" value="${sign_type}" />
+        <input type="submit" value="确认" style="display:none;" />
+    </form>
+    <script>
+    document.forms['alipaysubmit'].submit();
+                </script>
+</body>
+</html>

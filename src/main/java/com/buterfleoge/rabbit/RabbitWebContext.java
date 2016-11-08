@@ -14,6 +14,7 @@ public class RabbitWebContext {
 
     public static final String REQUEST_URI = "request_uri";
     public static final String REMOTE_IP = "remote_ip";
+    public static final String REAL_IP = "real_ip";
     public static final String START_TIME = "start_time";
 
     private static final ThreadLocal<Map<String, Object>> context = new ThreadLocal<Map<String, Object>>();
@@ -52,6 +53,14 @@ public class RabbitWebContext {
 
     public static final void setRemoteIp(String ip) {
         set(REMOTE_IP, ip);
+    }
+
+    public static final String getRealIp() {
+        return (String) get(REAL_IP);
+    }
+
+    public static final void setRealIp(String ip) {
+        set(REAL_IP, ip);
     }
 
     public static final long getStartTime() {

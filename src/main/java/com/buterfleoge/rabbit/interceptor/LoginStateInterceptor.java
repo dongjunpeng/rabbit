@@ -31,7 +31,7 @@ public class LoginStateInterceptor extends AuthInterceptor {
     @Override
     protected boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
         if ("GET".equals(request.getMethod())) {
-            StringBuffer buffer = request.getRequestURL();
+            StringBuffer buffer = new StringBuffer(request.getRequestURI());
             if (request.getQueryString() != null) {
                 buffer.append("?").append(request.getQueryString());
             }
