@@ -19,7 +19,10 @@ public class RabbitWebContextInterceptor extends RabbitInterceptor {
             throws Exception {
         RabbitWebContext.create();
         RabbitWebContext.setRequestURI(path);
-        RabbitWebContext.setRemoteIp(getIpAddrByRequest(request));
+        String remoteIp = getIpAddrByRequest(request);
+        String realIp = getRealIp(remoteIp);
+        RabbitWebContext.setRemoteIp(remoteIp);
+        RabbitWebContext.setRealIp(realIp);
         RabbitWebContext.setStartTime(System.currentTimeMillis());
         return true;
     }
@@ -42,6 +45,10 @@ public class RabbitWebContextInterceptor extends RabbitInterceptor {
             ip = request.getRemoteAddr();
         }
         return ip;
+    }
+
+    private String getRealIp(String ip) {
+        return ip == null ? null : ip.contains(",") ? ip.split(",")[0].trim() : ip;
     }
 
 }

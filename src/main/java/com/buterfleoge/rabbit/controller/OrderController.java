@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.multiaction.NoSuchRequestHandlingMethodException;
 
+import com.buterfleoge.rabbit.RabbitWebContext;
 import com.buterfleoge.rabbit.view.PdfView;
 import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.order.CancelOrderBiz;
@@ -25,12 +26,8 @@ import com.buterfleoge.whale.biz.order.OrderDiscountBiz;
 import com.buterfleoge.whale.biz.order.PayOrderBiz;
 import com.buterfleoge.whale.biz.order.RefundOrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
-import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateNotifyRequest;
 import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateReturnRequest;
-import com.buterfleoge.whale.service.weixin.protocol.WxPayJsapiNotifyRequest;
-import com.buterfleoge.whale.service.weixin.protocol.WxPayJsapiNotifyResponse;
 import com.buterfleoge.whale.type.PayType;
-import com.buterfleoge.whale.type.WxCode;
 import com.buterfleoge.whale.type.entity.OrderInfo;
 import com.buterfleoge.whale.type.protocol.Error;
 import com.buterfleoge.whale.type.protocol.Request;
@@ -139,8 +136,10 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/pay", method = RequestMethod.GET)
-    public ModelAndView payOrder(PayOrderRequest request, HttpServletResponse httpResponse) throws Exception {
+    public ModelAndView payOrder(PayOrderRequest request, HttpServletRequest httpServletRequest, HttpServletResponse httpResponse)
+            throws Exception {
         PayOrderByAlipayResponse response = new PayOrderByAlipayResponse();
+        request.setIp(RabbitWebContext.getRealIp());
         payOrderBiz.payOrder(requireAccountid(), request, response);
 
         ModelAndView modelAndView;
@@ -176,38 +175,7 @@ public class OrderController extends RabbitController {
         return modelAndView;
     }
 
-    @RequestMapping(value = "/alipay/notify", method = RequestMethod.POST)
-    public void alipayNotify(AlipayCreateNotifyRequest request, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) throws Exception {
-        Response response = new Response();
-        try {
-            payOrderBiz.handleAlipayNotify(requireAccountid(), httpRequest.getParameterMap(), request, response);
-            if (response.hasError()) {
-                httpResponse.getWriter().write("failed");
-            } else {
-                httpResponse.getWriter().write("success");
-            }
-        } catch (Exception e) {
-            LOG.error("handle alipay notify failed, reqid: " + request.getReqid(), e);
-            httpResponse.getWriter().write("failed");
-        }
-    }
-
     @ResponseBody
-    @RequestMapping(value = "/wxpay/notify", method = RequestMethod.POST)
-    public WxPayJsapiNotifyResponse wxpayNotify(@RequestBody WxPayJsapiNotifyRequest request, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse)
-            throws Exception {
-        WxPayJsapiNotifyResponse response = new WxPayJsapiNotifyResponse();
-        try {
-            payOrderBiz.handleWxpayNotify(requireAccountid(), request, response);
-        } catch (Exception e) {
-            LOG.error("handle wxpay notify failed, reqid: " + request.getReqid(), e);
-            response.setReturn_code(WxCode.FAIL.code);
-        }
-        return response;
-    }
-
     @RequestMapping(value = "/payresult", method = RequestMethod.GET)
     public OrderPayResultResponse getWxpayResult(OrderPayResultRequest request) throws Exception {
         OrderPayResultResponse response = new OrderPayResultResponse();

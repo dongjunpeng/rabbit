@@ -26,9 +26,6 @@ import com.buterfleoge.whale.service.weixin.protocol.WxLoginScope;
  */
 public class WapInterceptor extends AuthInterceptor {
 
-    private static final String ACCOUNT_HOME_URL_PREFIX = WebConfig.ACCOUNT_HOME_URL_PREFIX;
-    private static final String ORDER_URL_PREFIX = WebConfig.ORDER_URL_PREFIX;
-
     @Autowired
     @Resource(name = "weixinCgibinService")
     private WeixinWebService weixinCgibinService;
@@ -42,11 +39,7 @@ public class WapInterceptor extends AuthInterceptor {
 
     @Override
     protected boolean shouldPreHandle(String path, HttpServletRequest request) {
-        if (StringUtils.isEmpty(path) || !isWeixinUserAgent(request)) {
-            return false;
-        }
-        return (path.startsWith(ACCOUNT_HOME_URL_PREFIX) && !path.equals("/account/basicinfo"))
-                || path.startsWith(ORDER_URL_PREFIX);
+        return !StringUtils.isEmpty(path) && isWeixinUserAgent(request) && !path.startsWith("/wx");
     }
 
     @Override
@@ -70,7 +63,7 @@ public class WapInterceptor extends AuthInterceptor {
 
     private String createCallback(HttpServletRequest request) throws UnsupportedEncodingException {
         StringBuilder builder = new StringBuilder(baseCallback);
-        builder.append("?redirect=").append(request.getRequestURL());
+        builder.append("?redirect=").append(request.getRequestURI());
         if (request.getQueryString() != null) {
             builder.append("?").append(request.getQueryString());
         }

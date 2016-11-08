@@ -130,9 +130,9 @@ public class AccountController extends RabbitController {
     }
 
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)
-    public String getAccountPage(@PathVariable Long accountid, Request request) throws Exception {
+    public String getAccountPage(@PathVariable Long accountid, Request request, HttpServletRequest httpServletRequest) throws Exception {
         if (requireAccountid().equals(accountid)) {
-            return "account";
+            return isWeixinUserAgent(httpServletRequest) ? "redirect:/wap" : "account";
         } else {
             LOG.warn("No auth for get homepage of accountid: " + accountid + ", reqid: " + request.getReqid());
             return "redirect:" + WebConfig.NOTAUTH_URL;

@@ -12,11 +12,11 @@
     <script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
     <script>
     wx.config({
-        'debug': true,
-        'appId': '${config.appid}',
-        'timestamp': '${config.timestamp}', 
-        'nonceStr': '${config.nonceStr}', 
-        'signature': '${config.signature}',
+        'debug': false,
+        'appId': '${config_appid}',
+        'timestamp': '${config_timestamp}', 
+        'nonceStr': '${config_nonceStr}', 
+        'signature': '${config_signature}',
         'jsApiList': ['chooseWXPay']
     });
 
@@ -25,39 +25,39 @@
             'jsApiList': ['chooseWXPay'], 
             'success': function(res) {
                 if (isError(res.errMsg) || !res.checkResult.chooseWXPay) {
-                    hxyError();
+                    hxyError(res, "check res error");
                     return;
                 }
                 wx.chooseWXPay({
-                    'timestamp': '${pay.timestamp}', 
-                    'nonceStr': '${pay.nonceStr}', 
-                    'package': '${pay.package}',
-                    'signType': '${pay.signType}',
-                    'paySign': '${pay.paySign}', 
+                    'timestamp': '${pay_timestamp}', 
+                    'nonceStr': '${pay_nonceStr}', 
+                    'package': '${pay_package}',
+                    'signType': '${pay_signType}',
+                    'paySign': '${pay_paySign}', 
                     'success': function (res) {
-                        window.location.href = '/order/wxpay/result?orderid=${pay.orderid}';
+                        window.location.pathname = '/order/wxpay/result';
                     },
-                    'fail': function() {
-                        hxyError();
+                    'fail': function(e) {
+                        hxyError(e, "pay failed");
                     }
                 });
             },
-            'fail': function() {
-                hxyError();
+            'fail': function(e, tag) {
+                hxyError(e, "check failed");
             }
         });
     });
     
     wx.error(function(res){
-        hxyError();
+        hxyError(res, "global error");
     });
     
-    function hxyError() {
-        alert('失败，请直接联系海逍遥${hxy.hotline}');
+    function hxyError(e, tag) {
+        alert('失败，请直接联系海逍遥:${hxy_hotline}, ' + JSON.stringify(e) + ', tag: ' + tag);
     }
     
     function isError(errMsg) {
-        return errMsg.split(':')[1] == 'ok';
+        return errMsg.split(':')[1] != 'ok';
     }
                 </script>
 </body>

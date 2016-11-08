@@ -21,8 +21,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.rabbit.process.LoginProcess;
@@ -31,8 +33,12 @@ import com.buterfleoge.whale.Constants.CacheKey;
 import com.buterfleoge.whale.Constants.CookieKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
 import com.buterfleoge.whale.Utils;
+import com.buterfleoge.whale.biz.order.PayOrderBiz;
 import com.buterfleoge.whale.service.WeixinWebService;
 import com.buterfleoge.whale.service.weixin.protocol.WxLoginScope;
+import com.buterfleoge.whale.service.weixin.protocol.WxPayJsapiNotifyRequest;
+import com.buterfleoge.whale.service.weixin.protocol.WxPayJsapiNotifyResponse;
+import com.buterfleoge.whale.type.WxCode;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.protocol.Request;
 
@@ -48,8 +54,7 @@ public class WxController extends RabbitController implements InitializingBean {
     private static final Logger LOG = LoggerFactory.getLogger(WxController.class);
 
     private static final String WX_LOGING_CALLBACK = "<!DOCTYPE html><html><head>"
-            + "<script>try{console.log(self.opener); self.opener.reloadAccountBasicInfo();"
-            + "self.opener.location.reload();self.close();}catch(e){console.log(e);}</script></head><body></body></html>";
+            + "<script>try{self.opener.reloadAccountBasicInfo();}catch(e){console.log(e);}self.close();</script></head><body></body></html>";
 
     @Value("${wx.login.callback}")
     private String wxLoginCallback;
@@ -77,6 +82,9 @@ public class WxController extends RabbitController implements InitializingBean {
 
     @Autowired
     private AesEncryption aesEncryption;
+
+    @Autowired
+    private PayOrderBiz payOrderBiz;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -140,6 +148,11 @@ public class WxController extends RabbitController implements InitializingBean {
             AccountInfo accountInfo = loginProcess.weixinWapBaseLogin(code);
             if (accountInfo != null) {
                 addBasicInfoToSession(accountInfo);
+                String encryToken = new String(aesEncryption.encrypt(WebConfig.createToken(accountInfo.getAccountid())));
+                if (StringUtils.hasText(encryToken)) {
+                    response.addCookie(WebConfig.createCookie(CookieKey.ACCOUNTID, accountInfo.getAccountid().toString()));
+                    response.addCookie(WebConfig.createCookie(CookieKey.TOKEN, encryToken));
+                }
                 return "redirect:" + getRedirectUrl(request);
             } else {
                 // 跳转到手动授权链接
@@ -158,10 +171,28 @@ public class WxController extends RabbitController implements InitializingBean {
         if (StringUtils.hasText(code) && getState(request.getParameter("state")) != null) {
             AccountInfo accountInfo = loginProcess.weixinWapUserInfoLogin(code);
             addBasicInfoToSession(accountInfo);
-            String redirect = request.getParameter("redirect");
-            return "redirect:" + redirect;
+            String encryToken = new String(aesEncryption.encrypt(WebConfig.createToken(accountInfo.getAccountid())));
+            if (StringUtils.hasText(encryToken)) {
+                response.addCookie(WebConfig.createCookie(CookieKey.ACCOUNTID, accountInfo.getAccountid().toString()));
+                response.addCookie(WebConfig.createCookie(CookieKey.TOKEN, encryToken));
+            }
+            return "redirect:" + getRedirectUrl(request);
         }
         return "redirect:/syserror";
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/wxpay/jsapi/notify", method = RequestMethod.POST)
+    public WxPayJsapiNotifyResponse wxpayNotify(@RequestBody WxPayJsapiNotifyRequest request, HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) throws Exception {
+        WxPayJsapiNotifyResponse response = new WxPayJsapiNotifyResponse();
+        try {
+            payOrderBiz.handleWxpayNotify(request, response);
+        } catch (Exception e) {
+            LOG.error("handle wxpay notify failed, reqid: " + request.getReqid(), e);
+            response.setReturn_code(WxCode.FAIL.code);
+        }
+        return response;
     }
 
     public static String createState() {
@@ -194,7 +225,6 @@ public class WxController extends RabbitController implements InitializingBean {
 
     private String getParameter(Map<String, String[]> parameterMap, String key) {
         String[] parameters = parameterMap.get(key);
-        System.out.println(Arrays.toString(parameters));
         if (parameters == null) {
             throw new IllegalArgumentException("Can't find this parameter in query string: " + parameterMap + ", by key: " + key);
         }
