@@ -13,9 +13,9 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.StringUtils;
 
 import com.buterfleoge.rabbit.WebConfig;
-import com.buterfleoge.rabbit.controller.WxController;
 import com.buterfleoge.whale.Constants.CacheKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
+import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.service.WeixinWebService;
 import com.buterfleoge.whale.service.weixin.protocol.WxLoginScope;
 
@@ -54,7 +54,7 @@ public class WapInterceptor extends AuthInterceptor {
 
     @Override
     protected boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String state = WxController.createState();
+        String state = Utils.createNonceStr();
         String wxLoginUri = weixinCgibinService.getLoginUri(state, createCallback(request), WxLoginScope.SNSAPI_BASE);
         setState(state);
         response.sendRedirect(wxLoginUri);

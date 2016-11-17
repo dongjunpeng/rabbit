@@ -93,7 +93,7 @@ public class WxController extends RabbitController implements InitializingBean {
 
     @RequestMapping(value = "/login")
     public void wxLogin(Request req, HttpServletRequest request, HttpServletResponse httpResponse) throws Exception {
-        String state = createState();
+        String state = Utils.createNonceStr();
         String wxLoginUri = weixinWebService.getLoginUri(state, wxLoginCallback, WxLoginScope.SNSAPI_LOGIN);
         setState(state);
         httpResponse.sendRedirect(wxLoginUri);
@@ -156,13 +156,13 @@ public class WxController extends RabbitController implements InitializingBean {
                 return "redirect:" + getRedirectUrl(request);
             } else {
                 // 跳转到手动授权链接
-                String state = WxController.createState();
+                String state = Utils.createNonceStr();
                 String wxLoginUri = weixinCgibinService.getLoginUri(state, createCallback(request), WxLoginScope.SNSAPI_USERINFO);
                 setState(state);
                 return "redirect:" + wxLoginUri;
             }
         }
-        return "redirect:/syserror";
+        return "redirect:" + WebConfig.SYSERROR;
     }
 
     @RequestMapping(value = "/wap/callback/userinfo")
@@ -178,7 +178,7 @@ public class WxController extends RabbitController implements InitializingBean {
             }
             return "redirect:" + getRedirectUrl(request);
         }
-        return "redirect:/syserror";
+        return "redirect:" + WebConfig.SYSERROR;
     }
 
     @ResponseBody
@@ -193,13 +193,6 @@ public class WxController extends RabbitController implements InitializingBean {
             response.setReturn_code(WxCode.FAIL.code);
         }
         return response;
-    }
-
-    public static String createState() {
-        StringBuilder sb = new StringBuilder(DefaultValue.TOKEN) //
-                .append(DefaultValue.SEPARATOR).append(System.currentTimeMillis()) //
-                .append(DefaultValue.SEPARATOR).append(Math.random());
-        return Utils.stringMD5(sb.toString());
     }
 
     private void setState(String state) {

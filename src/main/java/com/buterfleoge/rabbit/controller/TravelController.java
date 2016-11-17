@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.biz.travel.TravelBiz;
 import com.buterfleoge.whale.dao.TravelRouteRepository;
 import com.buterfleoge.whale.type.protocol.Request;
+import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.travel.GetGroupRequest;
 import com.buterfleoge.whale.type.protocol.travel.GetGroupResponse;
 import com.buterfleoge.whale.type.protocol.travel.GetRouteRequest;
@@ -44,7 +46,7 @@ public class TravelController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/route", method = RequestMethod.GET)
-    public GetRouteResponse getRoute(GetRouteRequest request, HttpServletRequest req) throws Exception {
+    public Response getRoute(GetRouteRequest request, HttpServletRequest req) throws Exception {
         request.setFromWx(isWeixinUserAgent(req));
         GetRouteResponse response = new GetRouteResponse();
         travelBiz.getRoute(request, response);
@@ -53,7 +55,7 @@ public class TravelController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/group", method = RequestMethod.GET)
-    public GetGroupResponse getGroup(@Valid GetGroupRequest request) throws Exception {
+    public Response getGroup(@Valid GetGroupRequest request) throws Exception {
         GetGroupResponse response = new GetGroupResponse();
         travelBiz.getGroups(request, response);
         return response;
@@ -70,7 +72,7 @@ public class TravelController extends RabbitController {
                 LOG.error("find travel failed, travelid: " + travelid + ", reqid: " + request.getReqid(), e);
             }
         }
-        return "redirect:/notfound";
+        return WebConfig.getNotfoundPage(req);
     }
 
 }
