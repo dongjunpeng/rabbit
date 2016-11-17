@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>微信支付</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.0.2/weui.min.css">
+<style>
+.actual-price-label {
+    font-size: 23px;
+}
+
+.actual-price {
+    color: red;
+}
+
+.weui-progress {
+    margin: 0 20px;
+}
+</style>
+</head>
+<body>
+    <div class="weui-msg">
+        <div class="weui-msg__icon-area">
+            <i class="weui-icon-waiting weui-icon_msg"></i>
+        </div>
+        <div class="weui-msg__text-area">
+            <h2 class="weui-msg__title">自助付款中</h2>
+            <p class="weui-msg__desc">海逍遥旅行社</p>
+            <p class="actual-price-label">
+                支付金额： <span class="actual-price">${pay_actualPrice}</span>
+            </p>
+        </div>
+        <div class="weui-progress">
+            <div class="weui-progress__bar">
+                <div class="weui-progress__inner-bar js_progress" style="width: 80%;"></div>
+            </div>
+            <a href="javascript:;" class="weui-progress__opr">
+                <i class="weui-icon-cancel"></i>
+            </a>
+        </div>
+        <div class="weui-msg__extra-area">
+            <div class="weui-footer">
+                <p class="weui-footer__links">
+                    <a href="/" class="weui-footer__link">海逍遥旅行社</a>
+                </p>
+                <p class="weui-footer__text">Copyright &copy;
+                    2008-2016 www.hxytravel.com</p>
+            </div>
+        </div>
+    </div>
+    <script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+    <script>
+    wx.config({
+        'debug': false,
+        'appId': '${config_appid}',
+        'timestamp': '${config_timestamp}', 
+        'nonceStr': '${config_nonceStr}', 
+        'signature': '${config_signature}',
+        'jsApiList': ['chooseWXPay']
+    });
+
+    wx.ready(function(){
+        wx.checkJsApi({
+            'jsApiList': ['chooseWXPay'], 
+            'success': function(res) {
+                if (isError(res.errMsg) || !res.checkResult.chooseWXPay) {
+                    hxyError(res, "check res error");
+                    return;
+                }
+                wx.chooseWXPay({
+                    'timestamp': '${pay_timestamp}', 
+                    'nonceStr': '${pay_nonceStr}', 
+                    'package': '${pay_package}',
+                    'signType': '${pay_signType}',
+                    'paySign': '${pay_paySign}', 
+                    'success': function (res) {
+                        window.location.pathname = '/order/wxpay/result';
+                    },
+                    'fail': function(e) {
+                        hxyError(e, "pay failed");
+                    }
+                });
+            },
+            'fail': function(e, tag) {
+                hxyError(e, "check failed");
+            }
+        });
+    });
+    
+    wx.error(function(res){
+        hxyError(res, "global error");
+    });
+    
+    function hxyError(e, tag) {
+        alert('失败，请直接联系海逍遥:${hxy_hotline}, ' + JSON.stringify(e) + ', tag: ' + tag);
+    }
+    
+    function isError(errMsg) {
+        return errMsg.split(':')[1] != 'ok';
+    }
+                </script>
+</body>
+</html>

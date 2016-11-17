@@ -9,6 +9,7 @@ import org.springframework.validation.Validator;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 
+import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.SessionKey;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.protocol.Request;
@@ -89,8 +90,7 @@ public abstract class RabbitController {
     }
 
     protected final boolean isWeixinUserAgent(HttpServletRequest request) {
-        String userAgent = request.getHeader("User-Agent");
-        return userAgent != null && userAgent.contains("MicroMessenger");
+        return WebConfig.isWeixinUserAgent(request);
     }
 
 }

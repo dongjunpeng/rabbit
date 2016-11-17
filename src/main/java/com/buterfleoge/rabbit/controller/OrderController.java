@@ -14,8 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.multiaction.NoSuchRequestHandlingMethodException;
 
+import com.buterfleoge.rabbit.RabbitWebContext;
+import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.rabbit.view.PdfView;
 import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.order.CancelOrderBiz;
@@ -25,9 +26,8 @@ import com.buterfleoge.whale.biz.order.OrderDiscountBiz;
 import com.buterfleoge.whale.biz.order.PayOrderBiz;
 import com.buterfleoge.whale.biz.order.RefundOrderBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
-import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateNotifyRequest;
 import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateReturnRequest;
-import com.buterfleoge.whale.type.entity.OrderInfo;
+import com.buterfleoge.whale.type.PayType;
 import com.buterfleoge.whale.type.protocol.Error;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
@@ -37,10 +37,13 @@ import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersResponse;
 import com.buterfleoge.whale.type.protocol.order.GetContractRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
+import com.buterfleoge.whale.type.protocol.order.GetOrderHistoryResponse;
 import com.buterfleoge.whale.type.protocol.order.GetOrderResponse;
 import com.buterfleoge.whale.type.protocol.order.GetRefundTypeResponse;
 import com.buterfleoge.whale.type.protocol.order.NewOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.NewOrderResponse;
+import com.buterfleoge.whale.type.protocol.order.OrderPayResultRequest;
+import com.buterfleoge.whale.type.protocol.order.OrderPayResultResponse;
 import com.buterfleoge.whale.type.protocol.order.OrderRequest;
 import com.buterfleoge.whale.type.protocol.order.PayOrderByAlipayResponse;
 import com.buterfleoge.whale.type.protocol.order.PayOrderRequest;
@@ -55,7 +58,6 @@ import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
  * @author Brent24
  *
  */
-@SuppressWarnings("deprecation")
 @Controller
 @RequestMapping("/order")
 public class OrderController extends RabbitController {
@@ -85,7 +87,7 @@ public class OrderController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/new", method = RequestMethod.POST)
-    public NewOrderResponse newOrder(@Valid NewOrderRequest request) throws Exception {
+    public Response newOrder(@Valid NewOrderRequest request) throws Exception {
         NewOrderResponse response = new NewOrderResponse();
         createOrderBiz.newOrder(requireAccountid(), request, response);
         return response;
@@ -101,7 +103,7 @@ public class OrderController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/order", method = RequestMethod.GET)
-    public GetOrderResponse getOrder(OrderRequest request) throws Exception {
+    public Response getOrder(OrderRequest request) throws Exception {
         GetOrderResponse response = new GetOrderResponse();
         orderBiz.getOrder(requireAccountid(), request, response);
         return response;
@@ -109,7 +111,7 @@ public class OrderController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/brief", method = RequestMethod.GET)
-    public GetBriefOrdersResponse getBriefOrder(GetBriefOrdersRequest request) throws Exception {
+    public Response getBriefOrder(GetBriefOrdersRequest request) throws Exception {
         GetBriefOrdersResponse response = new GetBriefOrdersResponse();
         orderBiz.getBriefOrders(requireAccountid(), request, response);
         return response;
@@ -123,6 +125,14 @@ public class OrderController extends RabbitController {
         return response;
     }
 
+    @ResponseBody
+    @RequestMapping(value = "/history", method = RequestMethod.GET)
+    public Response getOrderHistory(OrderRequest request) throws Exception {
+        GetOrderHistoryResponse response = new GetOrderHistoryResponse();
+        orderBiz.getOrderHistory(requireAccountid(), request, response);
+        return response;
+    }
+
     @RequestMapping(value = "/contract/travel_contract", method = RequestMethod.GET)
     public ModelAndView getOrderContract(GetContractRequest request) throws Exception {
         Response response = new Response();
@@ -133,13 +143,19 @@ public class OrderController extends RabbitController {
     }
 
     @RequestMapping(value = "/pay", method = RequestMethod.GET)
-    public void payOrder(PayOrderRequest request, HttpServletResponse httpResponse) throws Exception {
+    public ModelAndView payOrder(PayOrderRequest request, HttpServletRequest httpServletRequest, HttpServletResponse httpResponse)
+            throws Exception {
         PayOrderByAlipayResponse response = new PayOrderByAlipayResponse();
-
+        request.setIp(RabbitWebContext.getRealIp());
         payOrderBiz.payOrder(requireAccountid(), request, response);
-        httpResponse.setHeader("Content-Type", "text/html;charset=UTF-8");
-        httpResponse.getWriter().write(response.getAlipayFrom());
 
+        ModelAndView modelAndView;
+        if (request.getPayType() == PayType.ALIPAY.value) {
+            modelAndView = new ModelAndView("alipay_form", response.getAlipayFrom());
+        } else {
+            modelAndView = new ModelAndView("wx_pay_jsapi", response.getWxJsapiModel());
+        }
+        return modelAndView;
     }
 
     @RequestMapping(value = "/alipay/return", method = RequestMethod.GET)
@@ -147,7 +163,7 @@ public class OrderController extends RabbitController {
         ModelAndView modelAndView;
         Response response = new Response();
         try {
-            payOrderBiz.handlePayReturn(requireAccountid(), httpRequest.getParameterMap(), request, response);
+            payOrderBiz.handleAlipayReturn(requireAccountid(), httpRequest.getParameterMap(), request, response);
             if (response.hasError()) {
                 modelAndView = new ModelAndView("alipay_create_direct_pay_failed");
             } else {
@@ -166,26 +182,22 @@ public class OrderController extends RabbitController {
         return modelAndView;
     }
 
-    @RequestMapping(value = "/alipay/notify", method = RequestMethod.POST)
-    public void alipayNotify(AlipayCreateNotifyRequest request, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) throws Exception {
-        Response response = new Response();
+    @ResponseBody
+    @RequestMapping(value = "/payresult", method = RequestMethod.GET)
+    public Response getWxpayResult(OrderPayResultRequest request) throws Exception {
+        OrderPayResultResponse response = new OrderPayResultResponse();
         try {
-            payOrderBiz.handlePayNotify(requireAccountid(), httpRequest.getParameterMap(), request, response);
-            if (response.hasError()) {
-                httpResponse.getWriter().write("failed");
-            } else {
-                httpResponse.getWriter().write("success");
-            }
+            payOrderBiz.getOrderPayResult(requireAccountid(), request, response);
         } catch (Exception e) {
-            LOG.error("pay order failed, reqid: " + request.getReqid(), e);
-            httpResponse.getWriter().write("failed");
+            LOG.error("get order pay result failed", e);
+            response.setStatus(Status.SYSTEM_ERROR);
         }
+        return response;
     }
 
     @ResponseBody
     @RequestMapping(value = "/refundtype", method = RequestMethod.GET)
-    public GetRefundTypeResponse getRefundType(OrderRequest request) throws Exception {
+    public Response getRefundType(OrderRequest request) throws Exception {
         GetRefundTypeResponse response = new GetRefundTypeResponse();
         refundOrderBiz.getRefundType(requireAccountid(), request, response);
         return response;
@@ -201,7 +213,7 @@ public class OrderController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/discount", method = RequestMethod.GET)
-    public GetDiscountResponse getDiscount(GetDiscountRequest request) throws Exception {
+    public Response getDiscount(GetDiscountRequest request) throws Exception {
         GetDiscountResponse response = new GetDiscountResponse();
         orderDiscountBiz.getDiscount(requireAccountid(), request, response);
         return response;
@@ -209,7 +221,7 @@ public class OrderController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/discountcode", method = RequestMethod.GET)
-    public ValidateCodeResponse validateDiscountCode(ValidateCodeRequest request) throws Exception {
+    public Response validateDiscountCode(ValidateCodeRequest request) throws Exception {
         ValidateCodeResponse response = new ValidateCodeResponse();
         orderDiscountBiz.validateDiscountCode(requireAccountid(), request, response);
         return response;
@@ -219,11 +231,14 @@ public class OrderController extends RabbitController {
     public String getOrderPage(@PathVariable Long orderid, Request request, HttpServletRequest httpRequest)
             throws Exception {
         Long accountid = requireAccountid();
-        OrderInfo orderInfo = orderInfoRepository.findByOrderidAndAccountid(orderid, accountid);
-        if (orderInfo == null) { // 通过NoSuchRequestHandlingMethodException来引发404异常
-            throw new NoSuchRequestHandlingMethodException(httpRequest);
+        try {
+            if (orderInfoRepository.countByOrderidAndAccountid(orderid, accountid) == 1) {
+                return isWeixinUserAgent(httpRequest) ? "worder" : "order";
+            }
+        } catch (Exception e) {
+            LOG.error("find orderid failed, travelid: " + orderid + ", reqid: " + request.getReqid(), e);
         }
-        return "order";
+        return WebConfig.getNotfoundPage(httpRequest);
     }
 
 }

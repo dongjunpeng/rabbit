@@ -13,9 +13,9 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.StringUtils;
 
 import com.buterfleoge.rabbit.WebConfig;
-import com.buterfleoge.rabbit.controller.WxController;
 import com.buterfleoge.whale.Constants.CacheKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
+import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.service.WeixinWebService;
 import com.buterfleoge.whale.service.weixin.protocol.WxLoginScope;
 
@@ -25,9 +25,6 @@ import com.buterfleoge.whale.service.weixin.protocol.WxLoginScope;
  *
  */
 public class WapInterceptor extends AuthInterceptor {
-
-    private static final String ACCOUNT_HOME_URL_PREFIX = WebConfig.ACCOUNT_HOME_URL_PREFIX;
-    private static final String ORDER_URL_PREFIX = WebConfig.ORDER_URL_PREFIX;
 
     @Autowired
     @Resource(name = "weixinCgibinService")
@@ -42,12 +39,7 @@ public class WapInterceptor extends AuthInterceptor {
 
     @Override
     protected boolean shouldPreHandle(String path, HttpServletRequest request) {
-        path = null;
-        if (StringUtils.isEmpty(path) || !isWeixinUserAgent(request)) {
-            return false;
-        }
-        return (path.startsWith(ACCOUNT_HOME_URL_PREFIX) && !path.equals("/account/basicinfo"))
-                || path.startsWith(ORDER_URL_PREFIX);
+        return !StringUtils.isEmpty(path) && isWeixinUserAgent(request) && !path.startsWith("/wx");
     }
 
     @Override
@@ -62,7 +54,7 @@ public class WapInterceptor extends AuthInterceptor {
 
     @Override
     protected boolean noAccountBasicInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String state = WxController.createState();
+        String state = Utils.createNonceStr();
         String wxLoginUri = weixinCgibinService.getLoginUri(state, createCallback(request), WxLoginScope.SNSAPI_BASE);
         setState(state);
         response.sendRedirect(wxLoginUri);
@@ -71,7 +63,7 @@ public class WapInterceptor extends AuthInterceptor {
 
     private String createCallback(HttpServletRequest request) throws UnsupportedEncodingException {
         StringBuilder builder = new StringBuilder(baseCallback);
-        builder.append("?redirect=").append(request.getRequestURL());
+        builder.append("?redirect=").append(request.getRequestURI());
         if (request.getQueryString() != null) {
             builder.append("?").append(request.getQueryString());
         }
