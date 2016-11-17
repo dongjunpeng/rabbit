@@ -13,6 +13,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.buterfleoge.rabbit.view.PdfView;
 import com.buterfleoge.whale.biz.travel.TravelBiz;
+import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.order.GetContractRequest;
 import com.buterfleoge.whale.type.protocol.travel.GetRouteRequest;
 import com.buterfleoge.whale.type.protocol.travel.GetRouteResponse;
@@ -40,7 +41,7 @@ public class IndexController {
 
     @ResponseBody
     @RequestMapping(value = "/hot", method = RequestMethod.GET)
-    public GetRouteResponse getHotRoute(GetRouteRequest request) throws Exception {
+    public Response getHotRoute(GetRouteRequest request) throws Exception {
         request.setRouteids(hotRouteidSet);
         GetRouteResponse response = new GetRouteResponse();
         travelBiz.getRoute(request, response);
@@ -49,7 +50,7 @@ public class IndexController {
 
     @ResponseBody
     @RequestMapping(value = "/wap/hot", method = RequestMethod.GET)
-    public GetRouteResponse getWapHotRoute(GetRouteRequest request) throws Exception {
+    public Response getWapHotRoute(GetRouteRequest request) throws Exception {
         request.setRouteids(Arrays.asList(hotRouteidSet.get(0)));
         GetRouteResponse response = new GetRouteResponse();
         travelBiz.getRoute(request, response);

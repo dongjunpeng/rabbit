@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
@@ -47,16 +48,14 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     public static final String LOGIN_URL = "/login";
     public static final String WX_LOGIN_URL = "/wx/login";
     public static final String NOTAUTH_URL = "/notauth";
+    public static final String SYSERROR = "/syserror";
 
     private static final Map<String, String> viewMap = new HashMap<String, String>();
 
     static {
-        viewMap.put("/", "/index.html");
-        viewMap.put("/wap", "/wap.html");
         viewMap.put("/routes", "/routes.html");
         viewMap.put("/activities", "/activities.html");
         viewMap.put(LOGIN_URL, "/login.html");
-        viewMap.put(NOTAUTH_URL, "/notauth.html");
         viewMap.put("/order/wxpay/result", "/wxpayresult.html");
     }
 
@@ -123,6 +122,18 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         return ACCOUNT_HOME_URL_PREFIX + "/" + accountid;
     }
 
+    public static String getNotauthPage(HttpServletRequest request) {
+        return isWeixinUserAgent(request) ? "wnotauth" : "notauth";
+    }
+
+    public static String getNotfoundPage(HttpServletRequest request) {
+        return isWeixinUserAgent(request) ? "wnotfound" : "notfound";
+    }
+
+    public static String getSyserrorPage(HttpServletRequest request) {
+        return isWeixinUserAgent(request) ? "wsyserror" : "syserror";
+    }
+
     public static String getValueFromCookies(Cookie[] cookies, String key) {
         if (ArrayUtils.isEmpty(cookies)) {
             return null;
@@ -168,6 +179,11 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     public static String getWapAccessTokenKey(Long accountid) {
         return "m" + DefaultValue.SEPARATOR + CacheKey.WX_ACCESS_TOKEN_PREFIX + DefaultValue.SEPARATOR + accountid;
+    }
+
+    public static boolean isWeixinUserAgent(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        return userAgent != null && userAgent.contains("MicroMessenger");
     }
 
 }

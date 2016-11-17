@@ -18,6 +18,7 @@ import org.springframework.util.CollectionUtils;
 
 import com.buterfleoge.whale.dao.DiscountCodeRepository;
 import com.buterfleoge.whale.dao.OrderDiscountRepository;
+import com.buterfleoge.whale.dao.OrderHistoryRepository;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
 import com.buterfleoge.whale.dao.TravelGroupRepository;
 import com.buterfleoge.whale.type.DiscountCodeStatus;
@@ -52,6 +53,9 @@ public class OrderTimeoutTask {
     @Autowired
     private DiscountCodeRepository discountCodeRepository;
 
+    @Autowired
+    private OrderHistoryRepository orderHistoryRepository;
+
     // 订单状态改变每分钟检查数据库
     @Transactional(rollbackFor = Exception.class)
     @Scheduled(fixedRate = 1000 * 60)
@@ -67,6 +71,7 @@ public class OrderTimeoutTask {
         for (OrderInfo orderInfo : orderList) {
             Integer oldOrderStatus = orderInfo.getStatus();
             orderInfo.setStatus(OrderStatus.TIMEOUT.value);
+            orderInfo.setModTime(new Date());
             orderHistorys.add(OrderHistory.newInstance(oldOrderStatus, orderInfo));
 
             TravelGroup group = travelGroupRepository.findOne(orderInfo.getGroupid());
@@ -84,6 +89,7 @@ public class OrderTimeoutTask {
         // 这里要是链表太长, 依赖spring的序列化方法了
         orderInfoRepository.save(orderList);
         travelGroupRepository.save(travelGroups);
+        orderHistoryRepository.save(orderHistorys);
         if (discountCodes.size() > 0) {
             discountCodeRepository.save(discountCodes);
         }

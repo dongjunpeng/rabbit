@@ -26,6 +26,8 @@ import com.buterfleoge.whale.type.protocol.account.GetBasicInfoResponse;
 import com.buterfleoge.whale.type.protocol.account.GetContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.GetContactsResponse;
 import com.buterfleoge.whale.type.protocol.account.GetDiscountCodeResponse;
+import com.buterfleoge.whale.type.protocol.account.GetWxShareConfigRequest;
+import com.buterfleoge.whale.type.protocol.account.GetWxShareConfigResponse;
 import com.buterfleoge.whale.type.protocol.account.PostBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
@@ -50,7 +52,7 @@ public class AccountController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
-    public GetBasicInfoResponse getBasicInfo(Request request, HttpServletRequest httpServletRequest)
+    public Response getBasicInfo(Request request, HttpServletRequest httpServletRequest)
             throws Exception {
         GetBasicInfoResponse response = new GetBasicInfoResponse();
         AccountBasicInfo basicInfo = getAccountBasicInfo();
@@ -72,7 +74,7 @@ public class AccountController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/contacts", method = RequestMethod.GET)
-    public GetContactsResponse getContacts(GetContactsRequest request) throws Exception {
+    public Response getContacts(GetContactsRequest request) throws Exception {
         GetContactsResponse response = new GetContactsResponse();
         accountBiz.getContacts(requireAccountid(), request, response);
         return response;
@@ -113,20 +115,28 @@ public class AccountController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/discountcode", method = RequestMethod.GET)
-    public GetDiscountCodeResponse deleteContacts(Request request) throws Exception {
+    public Response deleteContacts(Request request) throws Exception {
         GetDiscountCodeResponse response = new GetDiscountCodeResponse();
         accountBiz.getDiscountCode(requireAccountid(), request, response);
         return response;
     }
 
     @RequestMapping(value = "/wcontact", method = RequestMethod.GET)
-    public String getWapContact(Request request) throws Exception {
-        return "wcontact";
+    public String getWapContact(Request request, HttpServletRequest httpServletRequest) throws Exception {
+        return isWeixinUserAgent(httpServletRequest) ? "wcontact" : WebConfig.getNotfoundPage(httpServletRequest);
     }
 
     @RequestMapping(value = "/wdiscount", method = RequestMethod.GET)
-    public String getWapDiscount(Request request) throws Exception {
-        return "wdiscount";
+    public String getWapDiscount(Request request, HttpServletRequest httpServletRequest) throws Exception {
+        return isWeixinUserAgent(httpServletRequest) ? "wdiscount" : WebConfig.getNotfoundPage(httpServletRequest);
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/wxshareconfig", method = RequestMethod.GET)
+    public Response getWxShareConfig(GetWxShareConfigRequest request) throws Exception {
+        GetWxShareConfigResponse response = new GetWxShareConfigResponse();
+        accountBiz.getWxShareConfig(requireAccountid(), request, response);
+        return response;
     }
 
     @RequestMapping(value = "/{accountid}", method = RequestMethod.GET)
@@ -135,7 +145,7 @@ public class AccountController extends RabbitController {
             return isWeixinUserAgent(httpServletRequest) ? "redirect:/wap" : "account";
         } else {
             LOG.warn("No auth for get homepage of accountid: " + accountid + ", reqid: " + request.getReqid());
-            return "redirect:" + WebConfig.NOTAUTH_URL;
+            return WebConfig.getNotauthPage(httpServletRequest);
         }
     }
 
