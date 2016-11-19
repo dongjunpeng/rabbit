@@ -34,9 +34,10 @@ public class IndexController {
 
     {
         hotRouteidSet.add(1L);
-        hotRouteidSet.add(2L);
         hotRouteidSet.add(3L);
-        hotRouteidSet.add(4L);
+        hotRouteidSet.add(5L);
+        hotRouteidSet.add(6L);
+
     }
 
     @ResponseBody

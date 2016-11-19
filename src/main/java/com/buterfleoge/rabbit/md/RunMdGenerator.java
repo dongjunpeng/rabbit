@@ -11,11 +11,11 @@ import org.apache.commons.io.FileUtils;
  */
 
 public class RunMdGenerator {
-    // public static void main(String[] args) throws Exception {
-    // MdGenerator md = new MdGenerator();
-    // Thread thread = new Thread(md);
-    // thread.start();
-    // }
+    public static void main(String[] args) throws Exception {
+        MdGenerator md = new MdGenerator();
+        Thread thread = new Thread(md);
+        thread.start();
+    }
 }
 
 class MdGenerator implements Runnable {
@@ -26,7 +26,7 @@ class MdGenerator implements Runnable {
             try {
 
                 String path = "D:/workspace/md/";
-                String[] fileList = { "p00", "p01", "p02", "p03", "p04", "p05" };
+                String[] fileList = { "p00", "p01", "p02", "p03", "p04", "p05", "p06" };
 
                 for (String fileName : fileList) {
                     File file = new File(path + "source/" + fileName + ".txt");
