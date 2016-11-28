@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.buterfleoge.whale.dao.DiscountCodeRepository;
-import com.buterfleoge.whale.type.DiscountCodeStatus;
-import com.buterfleoge.whale.type.entity.DiscountCode;
+import com.buterfleoge.whale.type.CouponStatus;
+import com.buterfleoge.whale.type.entity.Coupon;
 
 /**
  * @author Brent24
@@ -24,8 +24,8 @@ public class DiscountCodeTimeoutTask {
 
     static {
         // 优惠码 创建和验证但未使用的
-        CODECHECK.add(DiscountCodeStatus.CREATED.value);
-        CODECHECK.add(DiscountCodeStatus.VERIFIED.value);
+        CODECHECK.add(CouponStatus.CREATED.value);
+        CODECHECK.add(CouponStatus.VERIFIED.value);
     }
 
     @Autowired
@@ -35,10 +35,10 @@ public class DiscountCodeTimeoutTask {
     @Transactional(rollbackFor = Exception.class)
     @Scheduled(cron = "1 0 0 * * ? ")
     public void changeDiscountCodeStatus() {
-        List<DiscountCode> codeList = discountCodeRepository.findByStatusIn(CODECHECK);
-        for (DiscountCode discountCode : codeList) {
+        List<Coupon> codeList = discountCodeRepository.findByStatusIn(CODECHECK);
+        for (Coupon discountCode : codeList) {
             if (discountCode.getEndTime().getTime() < System.currentTimeMillis()) {
-                discountCode.setStatus(DiscountCodeStatus.TIMEOUT.value);
+                discountCode.setStatus(CouponStatus.TIMEOUT.value);
             }
         }
         discountCodeRepository.save(codeList);

@@ -34,7 +34,6 @@ import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.order.CreateOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersRequest;
 import com.buterfleoge.whale.type.protocol.order.GetBriefOrdersResponse;
-import com.buterfleoge.whale.type.protocol.order.GetContractRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountRequest;
 import com.buterfleoge.whale.type.protocol.order.GetDiscountResponse;
 import com.buterfleoge.whale.type.protocol.order.GetOrderHistoryResponse;
@@ -47,6 +46,7 @@ import com.buterfleoge.whale.type.protocol.order.OrderPayResultResponse;
 import com.buterfleoge.whale.type.protocol.order.OrderRequest;
 import com.buterfleoge.whale.type.protocol.order.PayOrderByAlipayResponse;
 import com.buterfleoge.whale.type.protocol.order.PayOrderRequest;
+import com.buterfleoge.whale.type.protocol.order.PreviewContractRequest;
 import com.buterfleoge.whale.type.protocol.order.RefundOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
@@ -133,10 +133,19 @@ public class OrderController extends RabbitController {
         return response;
     }
 
-    @RequestMapping(value = "/contract/travel_contract", method = RequestMethod.GET)
-    public ModelAndView getOrderContract(GetContractRequest request) throws Exception {
+    @RequestMapping(value = "/contract", method = RequestMethod.GET, produces = "application/pdf")
+    public ModelAndView getOrderContract(OrderRequest request) throws Exception {
         Response response = new Response();
-        String pdfPath = createOrderBiz.createContract(requireAccountid(), request, response);
+        String pdfPath = createOrderBiz.getContract(requireAccountid(), request, response);
+        ModelAndView modelAndView = new ModelAndView("pdfView");
+        modelAndView.addObject(PdfView.PATH_KEY, pdfPath);
+        return modelAndView;
+    }
+
+    @RequestMapping(value = "/contract/preview", method = RequestMethod.GET, produces = "application/pdf")
+    public ModelAndView previewOrderContract(PreviewContractRequest request) throws Exception {
+        Response response = new Response();
+        String pdfPath = createOrderBiz.previewContract(requireAccountid(), request, response);
         ModelAndView modelAndView = new ModelAndView("pdfView");
         modelAndView.addObject(PdfView.PATH_KEY, pdfPath);
         return modelAndView;

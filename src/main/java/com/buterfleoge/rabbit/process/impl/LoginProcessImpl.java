@@ -189,6 +189,10 @@ public class LoginProcessImpl implements LoginProcess {
         }
     }
 
+    private void sendNewCoupon(AccountInfo accountInfo) throws Exception {
+
+    }
+
     private void addAccessTokenToCache(Long accountid, WxAccessTokenResponse accessToken, String cacheKey) {
         try {
             operations.set(cacheKey, accessToken);

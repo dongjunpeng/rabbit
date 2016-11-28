@@ -21,12 +21,12 @@ import com.buterfleoge.whale.dao.OrderDiscountRepository;
 import com.buterfleoge.whale.dao.OrderHistoryRepository;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
 import com.buterfleoge.whale.dao.TravelGroupRepository;
-import com.buterfleoge.whale.type.DiscountCodeStatus;
+import com.buterfleoge.whale.type.CouponStatus;
 import com.buterfleoge.whale.type.DiscountType;
 import com.buterfleoge.whale.type.GroupStatus;
 import com.buterfleoge.whale.type.OrderStatus;
 import com.buterfleoge.whale.type.OrderStatusCategory;
-import com.buterfleoge.whale.type.entity.DiscountCode;
+import com.buterfleoge.whale.type.entity.Coupon;
 import com.buterfleoge.whale.type.entity.OrderDiscount;
 import com.buterfleoge.whale.type.entity.OrderHistory;
 import com.buterfleoge.whale.type.entity.OrderInfo;
@@ -66,7 +66,7 @@ public class OrderTimeoutTask {
         }
 
         List<TravelGroup> travelGroups = new ArrayList<TravelGroup>(orderList.size());
-        List<DiscountCode> discountCodes = new ArrayList<DiscountCode>(orderList.size());
+        List<Coupon> discountCodes = new ArrayList<Coupon>(orderList.size());
         List<OrderHistory> orderHistorys = new ArrayList<OrderHistory>(orderList.size());
         for (OrderInfo orderInfo : orderList) {
             Integer oldOrderStatus = orderInfo.getStatus();
@@ -81,8 +81,8 @@ public class OrderTimeoutTask {
 
             OrderDiscount orderDiscount = orderDiscountRepository.findByOrderidAndType(orderInfo.getOrderid(), DiscountType.COUPON.value);
             if (orderDiscount != null) {
-                DiscountCode discountCode = discountCodeRepository.findByDiscountCode(orderDiscount.getDiscountCode());
-                discountCode.setStatus(DiscountCodeStatus.VERIFIED.value);
+                Coupon discountCode = discountCodeRepository.findByDiscountCode(orderDiscount.getDiscountCode());
+                discountCode.setStatus(CouponStatus.VERIFIED.value);
                 discountCodes.add(discountCode);
             }
         }
