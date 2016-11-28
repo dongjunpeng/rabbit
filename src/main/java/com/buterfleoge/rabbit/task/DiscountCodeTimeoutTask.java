@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.buterfleoge.whale.dao.DiscountCodeRepository;
+import com.buterfleoge.whale.dao.CouponRepository;
 import com.buterfleoge.whale.type.CouponStatus;
 import com.buterfleoge.whale.type.entity.Coupon;
 
@@ -29,7 +29,7 @@ public class DiscountCodeTimeoutTask {
     }
 
     @Autowired
-    private DiscountCodeRepository discountCodeRepository;
+    private CouponRepository discountCodeRepository;
 
     // 优惠码过期,每天00:01执行
     @Transactional(rollbackFor = Exception.class)
