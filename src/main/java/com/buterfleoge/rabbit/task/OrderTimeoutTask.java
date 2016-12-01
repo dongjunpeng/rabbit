@@ -81,8 +81,9 @@ public class OrderTimeoutTask {
 
             OrderDiscount orderDiscount = orderDiscountRepository.findByOrderidAndType(orderInfo.getOrderid(), DiscountType.COUPON.value);
             if (orderDiscount != null) {
-                Coupon discountCode = discountCodeRepository.findByDiscountCode(orderDiscount.getDiscountCode());
-                discountCode.setStatus(CouponStatus.VERIFIED.value);
+                Coupon discountCode = discountCodeRepository.findOne(orderDiscount.getCouponid());
+                discountCode.setStatus(CouponStatus.CREATED.value);
+                discountCode.setModTime(new Date());
                 discountCodes.add(discountCode);
             }
         }

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.buterfleoge.rabbit.view.PdfView;
-import com.buterfleoge.whale.biz.travel.TravelBiz;
+import com.buterfleoge.whale.biz.TravelBiz;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.order.PreviewContractRequest;
 import com.buterfleoge.whale.type.protocol.travel.GetRouteRequest;

@@ -1,8 +1,7 @@
 package com.buterfleoge.rabbit.task;
 
-import java.util.HashSet;
+import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,14 +19,6 @@ import com.buterfleoge.whale.type.entity.Coupon;
 @Component
 public class DiscountCodeTimeoutTask {
 
-    private static final Set<Integer> CODECHECK = new HashSet<Integer>();
-
-    static {
-        // 优惠码 创建和验证但未使用的
-        CODECHECK.add(CouponStatus.CREATED.value);
-        CODECHECK.add(CouponStatus.VERIFIED.value);
-    }
-
     @Autowired
     private CouponRepository discountCodeRepository;
 
@@ -35,10 +26,11 @@ public class DiscountCodeTimeoutTask {
     @Transactional(rollbackFor = Exception.class)
     @Scheduled(cron = "1 0 0 * * ? ")
     public void changeDiscountCodeStatus() {
-        List<Coupon> codeList = discountCodeRepository.findByStatusIn(CODECHECK);
+        List<Coupon> codeList = discountCodeRepository.findByStatus(CouponStatus.CREATED.value);
         for (Coupon discountCode : codeList) {
             if (discountCode.getEndTime().getTime() < System.currentTimeMillis()) {
                 discountCode.setStatus(CouponStatus.TIMEOUT.value);
+                discountCode.setModTime(new Date());
             }
         }
         discountCodeRepository.save(codeList);

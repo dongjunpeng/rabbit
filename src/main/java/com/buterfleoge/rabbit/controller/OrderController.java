@@ -19,12 +19,12 @@ import com.buterfleoge.rabbit.RabbitWebContext;
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.rabbit.view.PdfView;
 import com.buterfleoge.whale.Constants.Status;
-import com.buterfleoge.whale.biz.order.CancelOrderBiz;
-import com.buterfleoge.whale.biz.order.CreateOrderBiz;
-import com.buterfleoge.whale.biz.order.OrderBiz;
-import com.buterfleoge.whale.biz.order.OrderDiscountBiz;
-import com.buterfleoge.whale.biz.order.PayOrderBiz;
-import com.buterfleoge.whale.biz.order.RefundOrderBiz;
+import com.buterfleoge.whale.biz.OrderBiz;
+import com.buterfleoge.whale.biz.OrderCancelBiz;
+import com.buterfleoge.whale.biz.OrderCreateBiz;
+import com.buterfleoge.whale.biz.OrderDiscountBiz;
+import com.buterfleoge.whale.biz.OrderPayBiz;
+import com.buterfleoge.whale.biz.OrderRefundBiz;
 import com.buterfleoge.whale.dao.OrderInfoRepository;
 import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateReturnRequest;
 import com.buterfleoge.whale.type.PayType;
@@ -48,8 +48,6 @@ import com.buterfleoge.whale.type.protocol.order.PayOrderByAlipayResponse;
 import com.buterfleoge.whale.type.protocol.order.PayOrderRequest;
 import com.buterfleoge.whale.type.protocol.order.PreviewContractRequest;
 import com.buterfleoge.whale.type.protocol.order.RefundOrderRequest;
-import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
-import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
 
 /**
  *
@@ -68,16 +66,16 @@ public class OrderController extends RabbitController {
     private OrderBiz orderBiz;
 
     @Autowired
-    private CreateOrderBiz createOrderBiz;
+    private OrderCreateBiz orderCreateBiz;
 
     @Autowired
-    private CancelOrderBiz cancelOrderBiz;
+    private OrderCancelBiz orderCancelBiz;
 
     @Autowired
-    private PayOrderBiz payOrderBiz;
+    private OrderPayBiz orderPayBiz;
 
     @Autowired
-    private RefundOrderBiz refundOrderBiz;
+    private OrderRefundBiz orderRefundBiz;
 
     @Autowired
     private OrderDiscountBiz orderDiscountBiz;
@@ -89,7 +87,7 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/new", method = RequestMethod.POST)
     public Response newOrder(@Valid NewOrderRequest request) throws Exception {
         NewOrderResponse response = new NewOrderResponse();
-        createOrderBiz.newOrder(requireAccountid(), request, response);
+        orderCreateBiz.newOrder(requireAccountid(), request, response);
         return response;
     }
 
@@ -97,7 +95,7 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/order", method = RequestMethod.POST)
     public Response createOrder(@RequestBody @Valid CreateOrderRequest request) throws Exception {
         Response response = new Response();
-        createOrderBiz.createOrder(requireAccountid(), request, response);
+        orderCreateBiz.createOrder(requireAccountid(), request, response);
         return response;
     }
 
@@ -121,7 +119,7 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/order", method = RequestMethod.DELETE)
     public Response cancelOrder(OrderRequest request) throws Exception {
         Response response = new Response();
-        cancelOrderBiz.cancelOrder(requireAccountid(), request, response);
+        orderCancelBiz.cancelOrder(requireAccountid(), request, response);
         return response;
     }
 
@@ -136,7 +134,7 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/contract", method = RequestMethod.GET, produces = "application/pdf")
     public ModelAndView getOrderContract(OrderRequest request) throws Exception {
         Response response = new Response();
-        String pdfPath = createOrderBiz.getContract(requireAccountid(), request, response);
+        String pdfPath = orderCreateBiz.getContract(requireAccountid(), request, response);
         ModelAndView modelAndView = new ModelAndView("pdfView");
         modelAndView.addObject(PdfView.PATH_KEY, pdfPath);
         return modelAndView;
@@ -145,7 +143,7 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/contract/preview", method = RequestMethod.GET, produces = "application/pdf")
     public ModelAndView previewOrderContract(PreviewContractRequest request) throws Exception {
         Response response = new Response();
-        String pdfPath = createOrderBiz.previewContract(requireAccountid(), request, response);
+        String pdfPath = orderCreateBiz.previewContract(requireAccountid(), request, response);
         ModelAndView modelAndView = new ModelAndView("pdfView");
         modelAndView.addObject(PdfView.PATH_KEY, pdfPath);
         return modelAndView;
@@ -156,7 +154,7 @@ public class OrderController extends RabbitController {
             throws Exception {
         PayOrderByAlipayResponse response = new PayOrderByAlipayResponse();
         request.setIp(RabbitWebContext.getRealIp());
-        payOrderBiz.payOrder(requireAccountid(), request, response);
+        orderPayBiz.payOrder(requireAccountid(), request, response);
 
         ModelAndView modelAndView;
         if (request.getPayType() == PayType.ALIPAY.value) {
@@ -172,7 +170,7 @@ public class OrderController extends RabbitController {
         ModelAndView modelAndView;
         Response response = new Response();
         try {
-            payOrderBiz.handleAlipayReturn(requireAccountid(), httpRequest.getParameterMap(), request, response);
+            orderPayBiz.handleAlipayReturn(requireAccountid(), httpRequest.getParameterMap(), request, response);
             if (response.hasError()) {
                 modelAndView = new ModelAndView("alipay_create_direct_pay_failed");
             } else {
@@ -196,7 +194,7 @@ public class OrderController extends RabbitController {
     public Response getWxpayResult(OrderPayResultRequest request) throws Exception {
         OrderPayResultResponse response = new OrderPayResultResponse();
         try {
-            payOrderBiz.getOrderPayResult(requireAccountid(), request, response);
+            orderPayBiz.getOrderPayResult(requireAccountid(), request, response);
         } catch (Exception e) {
             LOG.error("get order pay result failed", e);
             response.setStatus(Status.SYSTEM_ERROR);
@@ -208,7 +206,7 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/refundtype", method = RequestMethod.GET)
     public Response getRefundType(OrderRequest request) throws Exception {
         GetRefundTypeResponse response = new GetRefundTypeResponse();
-        refundOrderBiz.getRefundType(requireAccountid(), request, response);
+        orderRefundBiz.getRefundType(requireAccountid(), request, response);
         return response;
     }
 
@@ -216,7 +214,7 @@ public class OrderController extends RabbitController {
     @RequestMapping(value = "/refund", method = RequestMethod.POST)
     public Response refundOrder(RefundOrderRequest request) throws Exception {
         Response response = new Response();
-        refundOrderBiz.refundOrder(requireAccountid(), request, response);
+        orderRefundBiz.refundOrder(requireAccountid(), request, response);
         return response;
     }
 
@@ -225,14 +223,6 @@ public class OrderController extends RabbitController {
     public Response getDiscount(GetDiscountRequest request) throws Exception {
         GetDiscountResponse response = new GetDiscountResponse();
         orderDiscountBiz.getDiscount(requireAccountid(), request, response);
-        return response;
-    }
-
-    @ResponseBody
-    @RequestMapping(value = "/discountcode", method = RequestMethod.GET)
-    public Response validateDiscountCode(ValidateCodeRequest request) throws Exception {
-        ValidateCodeResponse response = new ValidateCodeResponse();
-        orderDiscountBiz.validateDiscountCode(requireAccountid(), request, response);
         return response;
     }
 

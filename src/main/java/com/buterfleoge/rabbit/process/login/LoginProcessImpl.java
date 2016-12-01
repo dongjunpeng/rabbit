@@ -1,4 +1,4 @@
-package com.buterfleoge.rabbit.process.impl;
+package com.buterfleoge.rabbit.process.login;
 
 import java.util.Date;
 
@@ -23,7 +23,6 @@ import com.buterfleoge.whale.service.WeixinWebService;
 import com.buterfleoge.whale.service.weixin.protocol.WxAccessTokenResponse;
 import com.buterfleoge.whale.service.weixin.protocol.WxUserinfoResponse;
 import com.buterfleoge.whale.type.AccountStatus;
-import com.buterfleoge.whale.type.CouponStatus;
 import com.buterfleoge.whale.type.CouponType;
 import com.buterfleoge.whale.type.IdType;
 import com.buterfleoge.whale.type.entity.AccountBinding;
@@ -204,21 +203,13 @@ public class LoginProcessImpl implements LoginProcess {
 
     private void sendNewCoupon(AccountInfo accountInfo) throws Exception {
         Activity activity = activityRepository.findOne(Activity.ACTIVITY_NEW);
-        if (activity.isClose()) {
-            return;
-        }
-        Date now = new Date();
-        Coupon coupon = new Coupon();
-        coupon.setType(CouponType.NEW.value);
-        coupon.setStatus(CouponStatus.CREATED.value);
-        coupon.setValue(activity.findValue());
-        coupon.setAccountid(accountInfo.getAccountid());
-        coupon.setStartTime(now);
-        coupon.setAddTime(now);
-        try {
-            couponRepository.save(coupon);
-        } catch (Exception e) {
-            throw new Exception("insert coupon failed, coupon: " + coupon);
+        if (activity != null && activity.isOpen()) {
+            Coupon coupon = Coupon.createCoupon(accountInfo.getAccountid(), "新人优惠", CouponType.NEW, activity.getValue());
+            try {
+                couponRepository.save(coupon);
+            } catch (Exception e) {
+                throw new Exception("insert coupon failed, coupon: " + coupon);
+            }
         }
     }
 

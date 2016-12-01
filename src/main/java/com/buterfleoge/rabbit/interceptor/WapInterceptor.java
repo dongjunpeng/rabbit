@@ -63,7 +63,7 @@ public class WapInterceptor extends AuthInterceptor {
 
     private String createCallback(HttpServletRequest request) throws UnsupportedEncodingException {
         StringBuilder builder = new StringBuilder(baseCallback);
-        builder.append("?redirect=").append(request.getRequestURI());
+        builder.append("?origin=").append(request.getRequestURI());
         if (request.getQueryString() != null) {
             builder.append("?").append(request.getQueryString());
         }
