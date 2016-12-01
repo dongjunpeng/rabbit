@@ -54,7 +54,6 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     static {
         viewMap.put("/routes", "/routes.html");
-        viewMap.put("/activities", "/activities.html");
         viewMap.put(LOGIN_URL, "/login.html");
         viewMap.put("/order/wxpay/result", "/wxpayresult.html");
     }

@@ -33,13 +33,16 @@ import com.buterfleoge.whale.Constants.CacheKey;
 import com.buterfleoge.whale.Constants.CookieKey;
 import com.buterfleoge.whale.Constants.DefaultValue;
 import com.buterfleoge.whale.Utils;
-import com.buterfleoge.whale.biz.order.PayOrderBiz;
+import com.buterfleoge.whale.biz.OrderPayBiz;
+import com.buterfleoge.whale.dao.ActivityRepository;
 import com.buterfleoge.whale.service.WeixinWebService;
 import com.buterfleoge.whale.service.weixin.protocol.WxLoginScope;
 import com.buterfleoge.whale.service.weixin.protocol.WxPayJsapiNotifyRequest;
 import com.buterfleoge.whale.service.weixin.protocol.WxPayJsapiNotifyResponse;
+import com.buterfleoge.whale.type.AccountStatus;
 import com.buterfleoge.whale.type.WxCode;
 import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.entity.Activity;
 import com.buterfleoge.whale.type.protocol.Request;
 
 /**
@@ -52,9 +55,6 @@ import com.buterfleoge.whale.type.protocol.Request;
 public class WxController extends RabbitController implements InitializingBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(WxController.class);
-
-    private static final String WX_LOGING_CALLBACK = "<!DOCTYPE html><html><head>"
-            + "<script>try{self.opener.reloadAccountBasicInfo();}catch(e){console.log(e);}self.close();</script></head><body></body></html>";
 
     @Value("${wx.login.callback}")
     private String wxLoginCallback;
@@ -84,7 +84,10 @@ public class WxController extends RabbitController implements InitializingBean {
     private AesEncryption aesEncryption;
 
     @Autowired
-    private PayOrderBiz payOrderBiz;
+    private OrderPayBiz payOrderBiz;
+
+    @Autowired
+    private ActivityRepository activityRepository;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -100,7 +103,7 @@ public class WxController extends RabbitController implements InitializingBean {
     }
 
     @RequestMapping(value = "/callback")
-    public void wxCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public Object wxCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
         String code = request.getParameter("code");
         if (StringUtils.hasText(code) && getState(request.getParameter("state")) != null) {
             AccountInfo accountInfo = loginProcess.weixinWebLogin(code);
@@ -111,9 +114,10 @@ public class WxController extends RabbitController implements InitializingBean {
                 response.addCookie(WebConfig.createCookie(CookieKey.ACCOUNTID, accountid.toString()));
                 response.addCookie(WebConfig.createCookie(CookieKey.TOKEN, encryToken));
             }
+            return accountInfo.getStatus() == AccountStatus.WAIT_COMPLETE_INFO.value
+                    && isNewActivityOpen() ? "redirect:/activity/1" : "login_success";
         }
-        response.setHeader("Content-Type", "text/html;charset=UTF-8");
-        response.getWriter().write(WX_LOGING_CALLBACK);
+        return "login_success";
     }
 
     @RequestMapping(value = "/message", method = RequestMethod.GET)
@@ -162,11 +166,11 @@ public class WxController extends RabbitController implements InitializingBean {
                 return "redirect:" + wxLoginUri;
             }
         }
-        return "redirect:" + WebConfig.SYSERROR;
+        return WebConfig.SYSERROR;
     }
 
     @RequestMapping(value = "/wap/callback/userinfo")
-    public String wxWapUserinfoCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public Object wxWapUserinfoCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
         String code = request.getParameter("code");
         if (StringUtils.hasText(code) && getState(request.getParameter("state")) != null) {
             AccountInfo accountInfo = loginProcess.weixinWapUserInfoLogin(code);
@@ -176,9 +180,13 @@ public class WxController extends RabbitController implements InitializingBean {
                 response.addCookie(WebConfig.createCookie(CookieKey.ACCOUNTID, accountInfo.getAccountid().toString()));
                 response.addCookie(WebConfig.createCookie(CookieKey.TOKEN, encryToken));
             }
-            return "redirect:" + getRedirectUrl(request);
+            if (accountInfo.getStatus() == AccountStatus.WAIT_COMPLETE_INFO.value && isNewActivityOpen()) {
+                return "redirect:/activity/1?origin=" + request.getParameter("origin");
+            } else {
+                return "redirect:" + getRedirectUrl(request);
+            }
         }
-        return "redirect:" + WebConfig.SYSERROR;
+        return WebConfig.SYSERROR;
     }
 
     @ResponseBody
@@ -233,13 +241,23 @@ public class WxController extends RabbitController implements InitializingBean {
 
     private String createCallback(HttpServletRequest request) throws UnsupportedEncodingException {
         StringBuilder builder = new StringBuilder(userinfoCallback);
-        builder.append("?redirect=").append(request.getQueryString() == null ? "/" : request.getParameter("redirect"));
+        builder.append("?origin=").append(request.getQueryString() == null ? "/" : request.getParameter("origin"));
         return URLEncoder.encode(builder.toString(), "UTF-8");
     }
 
     private String getRedirectUrl(HttpServletRequest request) throws UnsupportedEncodingException {
-        String redirect = request.getParameter("redirect");
+        String redirect = request.getParameter("origin");
         return URLDecoder.decode(redirect, "UTF-8");
+    }
+
+    private boolean isNewActivityOpen() {
+        try {
+            Activity activity = activityRepository.findOne(Activity.ACTIVITY_NEW);
+            return activity != null && activity.isOpen();
+        } catch (Exception e) {
+            LOG.error("find activity failed", e);
+            return false;
+        }
     }
 
 }
