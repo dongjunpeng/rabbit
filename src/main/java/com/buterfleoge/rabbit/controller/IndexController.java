@@ -48,14 +48,14 @@ public class IndexController extends RabbitController {
         return response;
     }
 
-    @RequestMapping(value = "/hxy_secure_notice", method = RequestMethod.GET)
+    @RequestMapping(value = "/hxy_secure_notice", method = RequestMethod.GET, produces = "application/pdf")
     public ModelAndView getHxySecureNotice(PreviewContractRequest request) throws Exception {
         ModelAndView modelAndView = new ModelAndView("pdfView");
         modelAndView.addObject(PdfView.PATH_KEY, "classpath:hxy_secure_notice.pdf");
         return modelAndView;
     }
 
-    @RequestMapping(value = "/hxy_signup_notice", method = RequestMethod.GET)
+    @RequestMapping(value = "/hxy_signup_notice", method = RequestMethod.GET, produces = "application/pdf")
     public ModelAndView getHxyXXXNotice(PreviewContractRequest request) throws Exception {
         ModelAndView modelAndView = new ModelAndView("pdfView");
         modelAndView.addObject(PdfView.PATH_KEY, "classpath:hxy_signup_notice.pdf");
