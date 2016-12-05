@@ -103,7 +103,7 @@ public class WxController extends RabbitController implements InitializingBean {
     }
 
     @RequestMapping(value = "/callback")
-    public Object wxCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public String wxCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
         String code = request.getParameter("code");
         if (StringUtils.hasText(code) && getState(request.getParameter("state")) != null) {
             AccountInfo accountInfo = loginProcess.weixinWebLogin(code);
@@ -170,7 +170,7 @@ public class WxController extends RabbitController implements InitializingBean {
     }
 
     @RequestMapping(value = "/wap/callback/userinfo")
-    public Object wxWapUserinfoCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public String wxWapUserinfoCallback(Request req, HttpServletRequest request, HttpServletResponse response) throws Exception {
         String code = request.getParameter("code");
         if (StringUtils.hasText(code) && getState(request.getParameter("state")) != null) {
             AccountInfo accountInfo = loginProcess.weixinWapUserInfoLogin(code);
