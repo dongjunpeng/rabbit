@@ -17,20 +17,23 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buterfleoge.rabbit.WebConfig;
-import com.buterfleoge.whale.biz.account.AccountBiz;
-import com.buterfleoge.whale.dao.AccountInfoRepository;
+import com.buterfleoge.whale.biz.AccountBiz;
+import com.buterfleoge.whale.type.entity.AccountInfo;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.account.DeleteContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.GetBasicInfoResponse;
 import com.buterfleoge.whale.type.protocol.account.GetContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.GetContactsResponse;
-import com.buterfleoge.whale.type.protocol.account.GetDiscountCodeResponse;
+import com.buterfleoge.whale.type.protocol.account.GetCouponsRequest;
+import com.buterfleoge.whale.type.protocol.account.GetCouponsResponse;
 import com.buterfleoge.whale.type.protocol.account.GetWxShareConfigRequest;
 import com.buterfleoge.whale.type.protocol.account.GetWxShareConfigResponse;
 import com.buterfleoge.whale.type.protocol.account.PostBasicInfoRequest;
 import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
+import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
+import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
 
 /**
  * 账户相关处理
@@ -46,9 +49,6 @@ public class AccountController extends RabbitController {
 
     @Autowired
     private AccountBiz accountBiz;
-
-    @Autowired
-    private AccountInfoRepository accountInfoRepository;
 
     @ResponseBody
     @RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
@@ -67,8 +67,10 @@ public class AccountController extends RabbitController {
     public Response updateBasicInfo(PostBasicInfoRequest request) throws Exception {
         Long accountid = requireAccountid();
         Response response = new Response();
-        accountBiz.updateBasicInfo(accountid, request, response);
-        addBasicInfoToSession(accountInfoRepository.findOne(accountid));
+        AccountInfo accountInfo = accountBiz.updateBasicInfo(accountid, request, response);
+        if (accountInfo != null) {
+            addBasicInfoToSession(accountInfo);
+        }
         return response;
     }
 
@@ -114,10 +116,18 @@ public class AccountController extends RabbitController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/discountcode", method = RequestMethod.GET)
-    public Response deleteContacts(Request request) throws Exception {
-        GetDiscountCodeResponse response = new GetDiscountCodeResponse();
-        accountBiz.getDiscountCode(requireAccountid(), request, response);
+    @RequestMapping(value = "/coupons", method = RequestMethod.GET)
+    public Response getCoupons(GetCouponsRequest request) throws Exception {
+        GetCouponsResponse response = new GetCouponsResponse();
+        accountBiz.getCoupons(requireAccountid(), request, response);
+        return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/discountcode/validate", method = RequestMethod.GET)
+    public Response validateDiscountCode(ValidateCodeRequest request) throws Exception {
+        ValidateCodeResponse response = new ValidateCodeResponse();
+        accountBiz.validateDiscountCode(requireAccountid(), request, response);
         return response;
     }
 
@@ -126,9 +136,9 @@ public class AccountController extends RabbitController {
         return isWeixinUserAgent(httpServletRequest) ? "wcontact" : WebConfig.getNotfoundPage(httpServletRequest);
     }
 
-    @RequestMapping(value = "/wdiscount", method = RequestMethod.GET)
+    @RequestMapping(value = "/wcoupon", method = RequestMethod.GET)
     public String getWapDiscount(Request request, HttpServletRequest httpServletRequest) throws Exception {
-        return isWeixinUserAgent(httpServletRequest) ? "wdiscount" : WebConfig.getNotfoundPage(httpServletRequest);
+        return isWeixinUserAgent(httpServletRequest) ? "wcoupon" : WebConfig.getNotfoundPage(httpServletRequest);
     }
 
     @ResponseBody

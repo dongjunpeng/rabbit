@@ -1,6 +1,5 @@
 package com.buterfleoge.rabbit.process;
 
-import com.buterfleoge.whale.exception.WeixinException;
 import com.buterfleoge.whale.type.entity.AccountInfo;
 
 /**
@@ -10,10 +9,10 @@ import com.buterfleoge.whale.type.entity.AccountInfo;
  */
 public interface LoginProcess {
 
-    AccountInfo weixinWebLogin(String code) throws WeixinException;
+    AccountInfo weixinWebLogin(String code) throws Exception;
 
-    AccountInfo weixinWapBaseLogin(String code) throws WeixinException;
+    AccountInfo weixinWapBaseLogin(String code) throws Exception;
 
-    AccountInfo weixinWapUserInfoLogin(String code) throws WeixinException;
+    AccountInfo weixinWapUserInfoLogin(String code) throws Exception;
 
 }

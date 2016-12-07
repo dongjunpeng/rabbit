@@ -1,5 +1,6 @@
-package com.buterfleoge.rabbit.process.impl;
+package com.buterfleoge.rabbit.process.login;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import javax.annotation.Resource;
@@ -13,17 +14,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.rabbit.process.LoginProcess;
+import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.dao.AccountBindingRepository;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
+import com.buterfleoge.whale.dao.ActivityRepository;
+import com.buterfleoge.whale.dao.CouponRepository;
 import com.buterfleoge.whale.dao.WxIdMappingRepository;
 import com.buterfleoge.whale.exception.WeixinException;
 import com.buterfleoge.whale.service.WeixinWebService;
 import com.buterfleoge.whale.service.weixin.protocol.WxAccessTokenResponse;
 import com.buterfleoge.whale.service.weixin.protocol.WxUserinfoResponse;
 import com.buterfleoge.whale.type.AccountStatus;
+import com.buterfleoge.whale.type.CouponType;
 import com.buterfleoge.whale.type.IdType;
 import com.buterfleoge.whale.type.entity.AccountBinding;
 import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.entity.Activity;
+import com.buterfleoge.whale.type.entity.Coupon;
 import com.buterfleoge.whale.type.entity.WxIdMapping;
 
 /**
@@ -56,8 +63,14 @@ public class LoginProcessImpl implements LoginProcess {
     @Autowired
     private WxIdMappingRepository wxIdMappingRepository;
 
+    @Autowired
+    private CouponRepository couponRepository;
+
+    @Autowired
+    private ActivityRepository activityRepository;
+
     @Override
-    public AccountInfo weixinWebLogin(String code) throws WeixinException {
+    public AccountInfo weixinWebLogin(String code) throws Exception {
         WxAccessTokenResponse accessToken = weixinWebService.getAccessToken(code);
         if (accessToken == null || accessToken.getErrcode() != null) {
             throw new WeixinException("Get access token from weixin failed");
@@ -93,7 +106,7 @@ public class LoginProcessImpl implements LoginProcess {
     }
 
     @Override
-    public AccountInfo weixinWapUserInfoLogin(String code) throws WeixinException {
+    public AccountInfo weixinWapUserInfoLogin(String code) throws Exception {
         WxAccessTokenResponse accessToken = weixinCgibinService.getAccessToken(code);
         if (accessToken == null || accessToken.getErrcode() != null) {
             throw new WeixinException("Get access token from weixin failed");
@@ -130,18 +143,19 @@ public class LoginProcessImpl implements LoginProcess {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    private AccountInfo createAccountInfo(WxUserinfoResponse userinfoResponse)
-            throws WeixinException {
+    private AccountInfo createAccountInfo(WxUserinfoResponse userinfoResponse) throws Exception {
         AccountInfo accountInfo = insertAccountInfo(userinfoResponse);
         insertAccountSetting(accountInfo, userinfoResponse.getUnionid());
+        sendNewCoupon(accountInfo);
         return accountInfo;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    private AccountInfo createAccountInfoAndRecordWxIdMapping(WxUserinfoResponse userinfoResponse) throws WeixinException {
+    private AccountInfo createAccountInfoAndRecordWxIdMapping(WxUserinfoResponse userinfoResponse) throws Exception {
         AccountInfo accountInfo = insertAccountInfo(userinfoResponse);
         insertAccountSetting(accountInfo, userinfoResponse.getUnionid());
         insertWxIdMapping(accountInfo, userinfoResponse);
+        sendNewCoupon(accountInfo);
         return accountInfo;
     }
 
@@ -186,6 +200,20 @@ public class LoginProcessImpl implements LoginProcess {
             wxIdMappingRepository.save(wxIdMapping);
         } catch (Exception e) {
             throw new WeixinException("insert wxidmapping failed, info: " + accountInfo + ", wxidmapping: " + wxIdMapping, e);
+        }
+    }
+
+    private void sendNewCoupon(AccountInfo accountInfo) throws Exception {
+        Activity activity = activityRepository.findOne(Activity.ACTIVITY_NEW);
+        if (activity != null && activity.isOpen()) {
+            BigDecimal value = activity.getValue();
+            Coupon coupon = Coupon.createCoupon(accountInfo.getAccountid(), "新人优惠", "新人登录即获" + Utils.formatPrice(value) + "优惠券",
+                    CouponType.NEW, value);
+            try {
+                couponRepository.save(coupon);
+            } catch (Exception e) {
+                throw new Exception("insert coupon failed, coupon: " + coupon);
+            }
         }
     }
 

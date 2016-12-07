@@ -8,10 +8,13 @@ import java.util.Map.Entry;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.catalina.connector.Connector;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
+import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -54,13 +57,33 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     static {
         viewMap.put("/routes", "/routes.html");
-        viewMap.put("/activities", "/activities.html");
         viewMap.put(LOGIN_URL, "/login.html");
         viewMap.put("/order/wxpay/result", "/wxpayresult.html");
     }
 
     @Value("${img.host.url}")
     private String imgHostUrl;
+
+    @Value("${spring.tomcat.ajp.port}")
+    int ajpPort;
+
+    @Value("${spring.tomcat.ajp.enabled}")
+    boolean tomcatAjpEnabled;
+
+    @Bean
+    public EmbeddedServletContainerFactory servletContainer() {
+        TomcatEmbeddedServletContainerFactory tomcat = new TomcatEmbeddedServletContainerFactory();
+        if (tomcatAjpEnabled) {
+            Connector ajpConnector = new Connector("AJP/1.3");
+            ajpConnector.setProtocol("AJP/1.3");
+            ajpConnector.setPort(ajpPort);
+            ajpConnector.setSecure(false);
+            ajpConnector.setAllowTrace(false);
+            ajpConnector.setScheme("http");
+            tomcat.addAdditionalTomcatConnectors(ajpConnector);
+        }
+        return tomcat;
+    }
 
     @Bean(name = "rabbitWebContextInterceptor")
     public HandlerInterceptor getRabbitWebContextInterceptor() {

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import com.buterfleoge.whale.biz.order.PayOrderBiz;
+import com.buterfleoge.whale.biz.OrderPayBiz;
 import com.buterfleoge.whale.service.alipay.protocol.AlipayCreateNotifyRequest;
 import com.buterfleoge.whale.type.protocol.Response;
 
@@ -25,7 +25,7 @@ public class AliController extends RabbitController {
     private static final Logger LOG = LoggerFactory.getLogger(AliController.class);
 
     @Autowired
-    private PayOrderBiz payOrderBiz;
+    private OrderPayBiz payOrderBiz;
 
     @RequestMapping(value = "/alipay/notify", method = RequestMethod.POST)
     public void alipayNotify(AlipayCreateNotifyRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse)
