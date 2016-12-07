@@ -45,11 +45,11 @@
                     <a href="/" class="weui-footer__link">海逍遥旅行社</a>
                 </p>
                 <p class="weui-footer__text">Copyright &copy;
-                    2008-2016 www.hxytravel.com</p>
+                    2008-2016 <a href="https://www.hxytravel.com/">hxytravel.com</a></p>
             </div>
         </div>
     </div>
-    <script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
     <script>
     wx.config({
         'debug': false,
@@ -75,7 +75,7 @@
                     'signType': '${pay_signType}',
                     'paySign': '${pay_paySign}', 
                     'success': function (res) {
-                        window.location.pathname = '/order/wxpay/result';
+                        window.location.pathname = '/order/wxpay/result?orderid=${orderid}';
                     },
                     'fail': function(e) {
                         hxyError(e, "pay failed");
