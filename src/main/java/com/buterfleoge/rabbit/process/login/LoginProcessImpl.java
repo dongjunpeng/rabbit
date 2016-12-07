@@ -1,5 +1,6 @@
 package com.buterfleoge.rabbit.process.login;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import javax.annotation.Resource;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.rabbit.process.LoginProcess;
+import com.buterfleoge.whale.Utils;
 import com.buterfleoge.whale.dao.AccountBindingRepository;
 import com.buterfleoge.whale.dao.AccountInfoRepository;
 import com.buterfleoge.whale.dao.ActivityRepository;
@@ -204,7 +206,9 @@ public class LoginProcessImpl implements LoginProcess {
     private void sendNewCoupon(AccountInfo accountInfo) throws Exception {
         Activity activity = activityRepository.findOne(Activity.ACTIVITY_NEW);
         if (activity != null && activity.isOpen()) {
-            Coupon coupon = Coupon.createCoupon(accountInfo.getAccountid(), "新人优惠", CouponType.NEW, activity.getValue());
+            BigDecimal value = activity.getValue();
+            Coupon coupon = Coupon.createCoupon(accountInfo.getAccountid(), "新人优惠", "新人登录即获" + Utils.formatPrice(value) + "优惠券",
+                    CouponType.NEW, value);
             try {
                 couponRepository.save(coupon);
             } catch (Exception e) {
