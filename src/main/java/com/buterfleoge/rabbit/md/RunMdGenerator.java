@@ -56,7 +56,7 @@ class MdGenerator implements Runnable {
                         }
                     }
                     file = new File(path + fileName + ".md");
-                    FileUtils.writeStringToFile(file, mdBuilder.toString());
+                    FileUtils.writeStringToFile(file, mdBuilder.toString().replaceAll("p05", "/img/route/p05/p05"));
                 }
                 System.out.println(new Date(System.currentTimeMillis()));
                 Thread.sleep(1000);
