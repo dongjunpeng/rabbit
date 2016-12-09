@@ -59,6 +59,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         viewMap.put("/routes", "/routes.html");
         viewMap.put(LOGIN_URL, "/login.html");
         viewMap.put("/order/wxpay/result", "/wxpayresult.html");
+        viewMap.put("/aboutus", "/aboutus.html");
     }
 
     @Value("${img.host.url}")

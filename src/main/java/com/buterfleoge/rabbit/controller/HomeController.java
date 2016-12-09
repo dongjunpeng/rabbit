@@ -1,5 +1,6 @@
 package com.buterfleoge.rabbit.controller;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,7 @@ import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.dao.ActivityRepository;
 import com.buterfleoge.whale.dao.TravelRouteRepository;
 import com.buterfleoge.whale.type.protocol.GetActivityListResponse;
+import com.buterfleoge.whale.type.protocol.GetActivityRequest;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 
@@ -41,6 +43,12 @@ public class HomeController extends RabbitController {
         PC_ACTIVITY_PAGE.put(Long.valueOf(1L), "newactivity");
         WAP_ACTIVITY_PAGE.put(Long.valueOf(1L), "wnewactivity");
 
+        PC_ACTIVITY_PAGE.put(Long.valueOf(2L), "activities");
+        WAP_ACTIVITY_PAGE.put(Long.valueOf(2L), "wshare");
+
+        PC_ACTIVITY_PAGE.put(Long.valueOf(3L), "postcard");
+        WAP_ACTIVITY_PAGE.put(Long.valueOf(3L), "wpostcard");
+
     }
 
     @Autowired
@@ -61,11 +69,16 @@ public class HomeController extends RabbitController {
 
     @ResponseBody
     @RequestMapping(value = "/activity/list", method = RequestMethod.GET)
-    public Response getActivityList(Request request, HttpServletRequest req) throws Exception {
+    public Response getActivityList(GetActivityRequest request, HttpServletRequest req) throws Exception {
         GetActivityListResponse response = new GetActivityListResponse();
         try {
             Date now = new Date();
-            response.setActivities(activityRepository.findOpenActivity(now, now));
+            Long activityid = request.getActivityid();
+            if (activityid == null) {
+                response.setActivities(activityRepository.findOpenActivity(now, now));
+            } else {
+                response.setActivities(Arrays.asList(activityRepository.findOne(activityid)));
+            }
         } catch (Exception e) {
             LOG.error("get activities failed", e);
             response.setStatus(Status.DB_ERROR);

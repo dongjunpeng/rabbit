@@ -39,7 +39,8 @@ public class WapInterceptor extends AuthInterceptor {
 
     @Override
     protected boolean shouldPreHandle(String path, HttpServletRequest request) {
-        return !StringUtils.isEmpty(path) && isWeixinUserAgent(request) && !path.startsWith("/wx");
+        return !StringUtils.isEmpty(path) && isWeixinUserAgent(request) && !path.startsWith("/wx") && !path.contains("syserror")
+                && !path.contains("notfound") && !path.contains("/notauth");
     }
 
     @Override
