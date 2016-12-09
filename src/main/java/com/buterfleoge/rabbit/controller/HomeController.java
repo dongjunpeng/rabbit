@@ -62,6 +62,11 @@ public class HomeController extends RabbitController {
         return isWeixinUserAgent(req) ? "wap" : "index";
     }
 
+    @RequestMapping(value = "/aboutus", method = RequestMethod.GET)
+    public String getAboutus(Request request, HttpServletRequest req) throws Exception {
+        return "aboutus";
+    }
+
     @RequestMapping(value = "/activities", method = RequestMethod.GET)
     public String getActivities(Request request, HttpServletRequest req) throws Exception {
         return isWeixinUserAgent(req) ? "wactivities" : "activities";

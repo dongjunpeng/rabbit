@@ -210,7 +210,7 @@ public class LoginProcessImpl implements LoginProcess {
             BigDecimal value = activity.getValue();
             Coupon coupon = Coupon.createCoupon(accountInfo.getAccountid(), "新人优惠", "新人登录即获" + Utils.formatPrice(value) + "优惠券",
                     CouponType.NEW, value);
-            coupon.setEndTime(DateUtils.addYears(coupon.getStartTime(), 1));
+            coupon.setEndTime(DateUtils.addMonths(coupon.getStartTime(), 6));
             try {
                 couponRepository.save(coupon);
             } catch (Exception e) {
