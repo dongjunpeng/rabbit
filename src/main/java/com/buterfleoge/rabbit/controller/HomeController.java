@@ -38,7 +38,7 @@ public class HomeController extends RabbitController {
     private static final Map<Long, String> WAP_ACTIVITY_PAGE = new HashMap<Long, String>();
 
     static {
-        PC_ACTIVITY_PAGE.put(Long.valueOf(1L), "newactivity");
+        PC_ACTIVITY_PAGE.put(Long.valueOf(1L), "wnewactivity");
         WAP_ACTIVITY_PAGE.put(Long.valueOf(1L), "wnewactivity");
 
     }
@@ -56,7 +56,7 @@ public class HomeController extends RabbitController {
 
     @RequestMapping(value = "/activities", method = RequestMethod.GET)
     public String getActivities(Request request, HttpServletRequest req) throws Exception {
-        return isWeixinUserAgent(req) ? "wactivities" : "activities";
+        return isWeixinUserAgent(req) ? "wactivities" : "wactivities";
     }
 
     @ResponseBody
@@ -74,11 +74,13 @@ public class HomeController extends RabbitController {
     }
 
     @RequestMapping(value = "/activity/{activityid}", method = RequestMethod.GET)
-    public String getActivityList(@PathVariable Long activityid, Request request, HttpServletRequest req) throws Exception {
+    public String getActivityList(@PathVariable Long activityid, Request request, HttpServletRequest req)
+            throws Exception {
         if (activityid > 0) {
             try {
                 if (activityRepository.exists(activityid)) {
-                    return isWeixinUserAgent(req) ? WAP_ACTIVITY_PAGE.get(activityid) : PC_ACTIVITY_PAGE.get(activityid);
+                    return isWeixinUserAgent(req) ? WAP_ACTIVITY_PAGE.get(activityid)
+                            : PC_ACTIVITY_PAGE.get(activityid);
                 }
             } catch (Exception e) {
                 LOG.error("find activity failed, activityid: " + activityid + ", reqid: " + request.getReqid(), e);
