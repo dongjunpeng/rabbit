@@ -5,6 +5,7 @@ import java.util.Date;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -163,7 +164,7 @@ public class LoginProcessImpl implements LoginProcess {
         AccountInfo info = new AccountInfo();
         info.setStatus(AccountStatus.WAIT_COMPLETE_INFO.value);
         info.setIdType(IdType.IDENTIFICATION.value);
-        info.setNickname(userinfoResponse.getNickname());
+        info.setNickname(Utils.filterOffUtf8Mb4(userinfoResponse.getNickname()));
         info.setBirthday(new Date());
         info.setGender(userinfoResponse.getSex());
         info.setAvatarUrl(userinfoResponse.getHeadimgurl());
@@ -209,6 +210,7 @@ public class LoginProcessImpl implements LoginProcess {
             BigDecimal value = activity.getValue();
             Coupon coupon = Coupon.createCoupon(accountInfo.getAccountid(), "新人优惠", "新人登录即获" + Utils.formatPrice(value) + "优惠券",
                     CouponType.NEW, value);
+            coupon.setEndTime(DateUtils.addMonths(coupon.getStartTime(), 6));
             try {
                 couponRepository.save(coupon);
             } catch (Exception e) {

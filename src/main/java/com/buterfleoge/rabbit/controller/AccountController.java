@@ -17,8 +17,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buterfleoge.rabbit.WebConfig;
+import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.biz.AccountBiz;
+import com.buterfleoge.whale.dao.ActivityRepository;
+import com.buterfleoge.whale.dao.PostcardRepository;
 import com.buterfleoge.whale.type.entity.AccountInfo;
+import com.buterfleoge.whale.type.entity.Activity;
+import com.buterfleoge.whale.type.entity.Postcard;
+import com.buterfleoge.whale.type.protocol.Error;
+import com.buterfleoge.whale.type.protocol.PostcardJoinRequest;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
 import com.buterfleoge.whale.type.protocol.account.DeleteContactsRequest;
@@ -34,6 +41,8 @@ import com.buterfleoge.whale.type.protocol.account.PostContactsRequest;
 import com.buterfleoge.whale.type.protocol.account.object.AccountBasicInfo;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeRequest;
 import com.buterfleoge.whale.type.protocol.order.ValidateCodeResponse;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * 账户相关处理
@@ -49,6 +58,12 @@ public class AccountController extends RabbitController {
 
     @Autowired
     private AccountBiz accountBiz;
+
+    @Autowired
+    private ActivityRepository activityRepository;
+
+    @Autowired
+    private PostcardRepository postcardRepository;
 
     @ResponseBody
     @RequestMapping(value = "/basicinfo", method = RequestMethod.GET)
@@ -146,6 +161,46 @@ public class AccountController extends RabbitController {
     public Response getWxShareConfig(GetWxShareConfigRequest request) throws Exception {
         GetWxShareConfigResponse response = new GetWxShareConfigResponse();
         accountBiz.getWxShareConfig(requireAccountid(), request, response);
+        return response;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/postcard/join", method = RequestMethod.POST)
+    public Response getWxShareConfig(PostcardJoinRequest request) throws Exception {
+        Response response = new Response();
+        Long activityid = request.getActivityid();
+        Long accountid = requireAccountid();
+        int count = 0;
+        if (activityid == null || accountid < 0) {
+            return response;
+        }
+        try {
+            if (postcardRepository.countByActivityidAndAccountid(activityid, accountid) > 0) {
+                return response;
+            }
+            if (StringUtils.isEmpty(request.getAddress())) {
+                response.setStatus(Status.BIZ_ERROR);
+                response.addError(new Error("地址为空"));
+                return response;
+            }
+            Activity activity = activityRepository.findOne(activityid);
+            if (activity == null) {
+                response.setStatus(Status.BIZ_ERROR);
+                response.addError(new Error("活动不存在"));
+                return response;
+            }
+            ObjectNode param = activity.getParam();
+            count = param.get("count").asInt();
+            if (count > 0) {
+                param.set("count", new IntNode(--count));
+            }
+            postcardRepository.save(Postcard.create(activityid, accountid, request.getAddress()));
+            activityRepository.save(activity);
+        } catch (Exception e) {
+            LOG.error("update postcard activity failed, count: " + count, e);
+            response.setStatus(Status.DB_ERROR);
+            response.addError(new Error("系统异常"));
+        }
         return response;
     }
 
