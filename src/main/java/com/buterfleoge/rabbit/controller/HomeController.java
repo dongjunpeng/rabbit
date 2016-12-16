@@ -11,19 +11,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.buterfleoge.rabbit.RabbitWebContext;
 import com.buterfleoge.rabbit.WebConfig;
 import com.buterfleoge.whale.Constants.Status;
 import com.buterfleoge.whale.dao.ActivityRepository;
+import com.buterfleoge.whale.dao.ShareRepository;
 import com.buterfleoge.whale.dao.TravelRouteRepository;
+import com.buterfleoge.whale.type.Device;
+import com.buterfleoge.whale.type.entity.Share;
 import com.buterfleoge.whale.type.protocol.GetActivityListResponse;
 import com.buterfleoge.whale.type.protocol.GetActivityRequest;
 import com.buterfleoge.whale.type.protocol.Request;
 import com.buterfleoge.whale.type.protocol.Response;
+import com.buterfleoge.whale.type.protocol.ShareRequest;
+
+import eu.bitwalker.useragentutils.OperatingSystem;
+import eu.bitwalker.useragentutils.UserAgent;
 
 /**
  *
@@ -48,7 +57,6 @@ public class HomeController extends RabbitController {
 
         PC_ACTIVITY_PAGE.put(Long.valueOf(3L), "postcard");
         WAP_ACTIVITY_PAGE.put(Long.valueOf(3L), "wpostcard");
-
     }
 
     @Autowired
@@ -56,6 +64,9 @@ public class HomeController extends RabbitController {
 
     @Autowired
     private ActivityRepository activityRepository;
+
+    @Autowired
+    private ShareRepository shareRepository;
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String getHotRoute(Request request, HttpServletRequest req) throws Exception {
@@ -108,10 +119,22 @@ public class HomeController extends RabbitController {
     }
 
     @RequestMapping(value = "/wproduct/{travelid}", method = RequestMethod.GET)
-    public String getHotRoute(@PathVariable Long travelid, Request request, HttpServletRequest req) throws Exception {
+    public String getHotRoute(@PathVariable Long travelid, ShareRequest request, HttpServletRequest req) throws Exception {
         if (travelid > 0) {
             try {
                 if (travelRouteRepository.exists(travelid) && isWeixinUserAgent(req)) {
+                    String source = request.getSource();
+                    String channel = request.getChannel();
+                    Long accountid = getAccountid();
+                    if (StringUtils.hasText(source) && StringUtils.hasText(channel) && accountid != null) {
+                        Share share = Share.create(source, channel, travelid, "/wproduct", accountid, RabbitWebContext.getRealIp(),
+                                getDevice(req.getHeader("User-Agent")));
+                        try {
+                            shareRepository.save(share);
+                        } catch (Exception e) {
+                            LOG.error("save share entity failed: " + share, e);
+                        }
+                    }
                     return "wproduct";
                 }
             } catch (Exception e) {
@@ -134,6 +157,13 @@ public class HomeController extends RabbitController {
     @RequestMapping(value = "/syserror", method = RequestMethod.GET)
     public String getSyserror(Request request, HttpServletRequest req) throws Exception {
         return WebConfig.getSyserrorPage(req);
+    }
+
+    private Integer getDevice(String userAgent) {
+        UserAgent ua = UserAgent.parseUserAgentString(userAgent);
+        OperatingSystem os = ua.getOperatingSystem();
+        return os.getName().startsWith("Android") ? Device.ANDROID.value
+                : os.getName().startsWith("iOS") ? Device.IPHONE.value : Device.UNKNOWN.value;
     }
 
 }
